@@ -24,16 +24,21 @@ A.boot=async function(){
     A.user=u;
     const pr=await A.client.from('profiles').select('username').eq('id',u.id).maybeSingle();
     A.name=(pr.data&&pr.data.username)||(u.user_metadata&&u.user_metadata.username)||'Player';
-    const r=await A.client.from('saves').select('data').eq('user_id',u.id).maybeSingle();
-    const AK=ACCT_KEY+'-'+u.id, local=ls.get(AK);
-    if(r.data&&r.data.data){
-      const cloud=JSON.stringify(r.data.data);
-      /* keep whichever has more lifetime EXP, so offline progress is never lost */
-      if(local&&lifeOf(local)>lifeOf(cloud)) A.seedCloud=true; else ls.set(AK,cloud);
-    }else A.seedCloud=true;
-  }catch(e){ if(!A.user){A.mode='guest';} }
+    const r=await A.call('state');
+    A.serverState=r.S; A.bl=r.bl||0;
+  }catch(e){ A.user=null; A.mode='guest'; A.bootErr=(e&&e.message)||'Could not reach the server.'; }
 };
 
+A.call=async function(action,extra){
+  const r=await A.client.functions.invoke('game',{body:Object.assign({action},extra||{})});
+  if(r.error){
+    let m='Could not reach the server.';
+    try{ const j=await r.error.context.json(); if(j&&j.error) m=j.error; }catch(e){}
+    const e=new Error(m); e.slow=(m==='slow'); throw e;
+  }
+  if(r.data&&r.data.error) throw new Error(r.data.error);
+  return r.data;
+};
 A.push=async function(row){
   if(!A.enabled||!A.user) return false;
   const {error}=await A.client.from('saves').upsert(Object.assign({user_id:A.user.id,updated_at:new Date().toISOString()},row));
@@ -126,6 +131,7 @@ function modal(view){
 }
 A.start=function(){
   bar();
+  if(A.bootErr){ const n=$('lbNote'); setTimeout(()=>{ if(n) n.textContent='Could not load your account ('+A.bootErr+'). Playing as a guest for now; reload to try again.'; },1500); }
   if(A.enabled&&!ls.get(MODE_KEY)) modal('choice');
 };
 })();

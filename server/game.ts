@@ -1,8 +1,7 @@
 // Supabase Edge Function "game": the server rolls, buys and rebirths. The browser can only ask.
 import { createClient } from "jsr:@supabase/supabase-js@2";
-const ENGINE_URL = "https://periodic-roll.vercel.app/js/engine.mjs";
-let E: any = null;
-async function eng() { if (!E) E = await import(ENGINE_URL); return E; }
+import * as GE from "https://periodic-roll.vercel.app/js/engine.mjs";
+const eng = async () => GE as any;
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type", "Content-Type": "application/json" };
 const j = (o: unknown, st = 200) => new Response(JSON.stringify(o), { status: st, headers: CORS });
 const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);

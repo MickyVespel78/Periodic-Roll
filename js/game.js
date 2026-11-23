@@ -310,8 +310,15 @@ function merge(d){
     } else S[k]=d[k];
   }
 }
+const REMOTE=()=>!!(window.PRAuth&&PRAuth.enabled&&PRAuth.user&&PRAuth.mode==='account');
+function applyRemote(res){
+  const keepSq=null; Object.assign(S,fresh()); merge(res.S);
+  if(res.bl>0) boostUntil=Date.now()+res.bl;
+}
+function netNote(msg){ const n=$('lbNote'); if(n&&msg) n.textContent=msg; }
 let saveT=null;
 function save(){
+  if(REMOTE()) return;
   clearTimeout(saveT);
   saveT=setTimeout(()=>{try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}},400);
 }
@@ -403,6 +410,11 @@ function buildUps(){
     const d=DEFS.find(x=>x.k===b.closest('.up').dataset.k);
     const l=S.up[d.k]; if(l>=d.max) return;
     const c=d.cost(l); if(S.exp<c) return;
+    if(REMOTE()){
+      if(rolling) return; rolling=true;
+      PRAuth.call('buy',{k:d.k}).then(res=>{ applyRemote(res); syncAuto(); renderWallet(); updateUps(); renderRebirth(); schedule(); },e=>netNote(e.message)).then(()=>{ rolling=false; });
+      return;
+    }
     S.exp-=c; S.up[d.k]=l+1;
     if(d.k==='auto'){S.autoOn=true;}
     syncAuto(); renderWallet(); updateUps(); schedule(); save();
@@ -507,8 +519,10 @@ function renderDisc(){
 }
 
 /* rolling */
+let rolling=false;
 function doRoll(auto){
-  if(busy) return;
+  if(busy||rolling) return;
+  if(REMOTE()){ doRollRemote(auto); return; }
   mutBoost=1+MS_MUT*msCount(); detP=detChance(S.rebirths);
   const r=rollOnce(effL());
   const gain=Math.max(1,Math.round(Math.pow(r.odds,0.7)*expMult()));
@@ -534,6 +548,20 @@ function doRoll(auto){
   S.top.push(p); S.top.sort((a,b)=>b.odds-a.odds); S.top=S.top.slice(0,5);
   S.recent.unshift(p); S.recent=S.recent.slice(0,6);
   S.last=p;
+  present(p,notes,outs,rec,auto);
+}
+async function doRollRemote(auto){
+  rolling=true;
+  let res;
+  try{ res=await PRAuth.call('roll',{autoOn:!!S.autoOn}); }
+  catch(e){ rolling=false; if(!e.slow) netNote(e.message||'Could not reach the server.'); return; }
+  rolling=false;
+  if(!res||!res.p) return;
+  applyRemote(res);
+  if(res.ms) msToast();
+  present(res.p,res.notes||[],res.outs||[],!!res.rec,auto);
+}
+function present(p,notes,outs,rec,auto){
   const st=(!auto||interval(S.up.speed)>=600)?45:0;
   renderTray(p,true,st);
   renderResult(p,notes,true);
@@ -639,7 +667,7 @@ function setNote(){
   if(!myId){n.textContent='Your account has no identity on this page, so your score cannot be posted. You can still view the board.';return;}
   if(canPost===false||postBlocked){n.textContent='You can view the leaderboard. Posting a score needs Contributor access to this page.';return;}
   if(!gotSnap){n.textContent='Connecting to the leaderboard…';return;}
-  n.textContent='Your score posts automatically every few seconds while you play.';
+  n.textContent='Your progress is saved and checked by the server, so scores cannot be edited.';
 }
 function miniEl(sq){
   const box=document.createElement('span'); box.className='sub';
@@ -705,18 +733,6 @@ async function initBoardCloud(){
     gotSnap=true; cloudOn=true; renderBoard();
   };
   await pull(); setInterval(pull,20000);
-  if(A.user){
-    if(S.rolls>0||A.seedCloud) markDirty();
-    const push=async()=>{
-      if(!dirty||writing) return; writing=true; dirty=false;
-      const p=payload();
-      const ok=await A.push({data:JSON.parse(JSON.stringify(S)),life:p.life,best_odds:p.bestOdds,best_sq:p.bestSq,level:p.level,rolls:p.rolls,found:p.found,rebirths:p.rebirths});
-      if(!ok){ dirty=true; n.textContent='The server did not accept your latest save. If this keeps happening, your progress may look too fast to be real.'; } writing=false;
-    };
-    setInterval(push,8000); push();
-    document.addEventListener('visibilitychange',()=>{ if(document.hidden) push(); });
-    window.addEventListener('pagehide',push);
-  }
 }
 async function initBoard(){
   if(window.PRAuth&&window.PRAuth.enabled){ try{ await initBoardCloud(); }catch(e){ $('lbNote').textContent='The leaderboard is unavailable right now.'; } return; }
@@ -1215,6 +1231,7 @@ function msToast(){
   el.classList.add('on'); clearTimeout(msT); msT=setTimeout(()=>el.classList.remove('on'),4500);
 }
 function startBoost(){
+  if(REMOTE()) PRAuth.call('boost').catch(()=>{});
   boostUntil=Date.now()+BOOST_MS;
   const fl=$('flash'); fl.classList.remove('go'); void fl.offsetWidth; fl.classList.add('go');
   sndRecord();
@@ -2480,8 +2497,19 @@ function renderRebirth(){
   if(!rbArmed) b.textContent=max?'Fully reborn':('Rebirth '+(r+1));
   $('rbNext').textContent=r>=3?'The Auto-roller is free and stays on.':(r===2?'Your next rebirth gives a free Auto-roller.':'Rebirth 3 gives a free Auto-roller.');
 }
+function afterRebirth(){
+  if(S.rebirths>=3){ S.up.auto=1; S.autoOn=true; }
+  paintAll(); renderWallet(); renderLists(); renderDisc(); updateUps(); syncAuto(); renderRebirth();
+  save(); markDirty();
+  playRebirthCut(S.rebirths,false,()=>{ doRoll(false); schedule(); save(); markDirty(); });
+}
 function doRebirth(){
   const r=S.rebirths; if(r>=RB_MAX||S.exp<rbCost(r)) return;
+  if(REMOTE()){
+    if(rolling) return; rolling=true; clearTimeout(timer);
+    PRAuth.call('rebirth').then(res=>{ applyRemote(res); rolling=false; afterRebirth(); },e=>{ rolling=false; netNote(e.message); schedule(); });
+    return;
+  }
   const keep={rolls:S.rolls,found:S.found,words:S.words,rx:S.rx,top:S.top,recent:S.recent,secs:S.secs,dets:S.dets,tot:S.tot,life:S.life,best:S.best,outers:S.outers,stars:S.stars,impacts:S.impacts,systems:S.systems,holes:S.holes,beyonds:S.beyonds,multis:S.multis,unis:S.unis,omnis:S.omnis,absolutes:S.absolutes,ones:S.ones};
   clearTimeout(timer);
   Object.assign(S,fresh());
@@ -2509,7 +2537,7 @@ function init(){
   rp.addEventListener('click',e=>{ if(e.target===rp) setRar(false); });
   document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&!rp.hidden) setRar(false); });
   $('rollBtn').addEventListener('click',()=>doRoll(false));
-  $('autoChk').addEventListener('change',e=>{S.autoOn=e.target.checked;schedule();save();});
+  $('autoChk').addEventListener('change',e=>{S.autoOn=e.target.checked;schedule();save(); if(REMOTE()) PRAuth.call('auto',{on:S.autoOn}).catch(()=>{});});
   document.addEventListener('keydown',e=>{
     if(e.code!=='Space'||e.repeat) return;
     const t=document.activeElement&&document.activeElement.tagName;
@@ -2529,6 +2557,7 @@ function init(){
     clearTimeout(armT); armed=false; b.classList.remove('armed'); b.textContent='Reset progress';
     clearTimeout(timer); clearTimeout(saveT);
     Object.assign(S,fresh());
+    if(REMOTE()) PRAuth.call('reset').catch(e=>netNote(e.message));
     try{localStorage.removeItem(KEY);localStorage.removeItem(OLDKEY);}catch(e){}
     paintAll(); renderWallet(); renderLists(); renderDisc(); updateUps(); syncAuto(); markDirty();
     $('dexInfo').textContent='Select an element to see its odds.';
@@ -2569,8 +2598,8 @@ try{
 }catch(e){}
 const start=function(data){
   if(window.PRAuth) KEY=window.PRAuth.key();
-  load();
-  if(data&&data.S) merge(data.S);
+  if(REMOTE()){ merge(PRAuth.serverState); if(PRAuth.bl>0) boostUntil=Date.now()+PRAuth.bl; }
+  else{ load(); if(data&&data.S) merge(data.S); }
   S.up.speed=Math.min(10,Math.max(0,S.up.speed|0));
   init();
   if(window.PRAuth) window.PRAuth.start();
