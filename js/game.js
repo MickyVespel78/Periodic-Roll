@@ -253,6 +253,13 @@ function setPerf(on,store){
   if(b){ b.setAttribute('aria-pressed',PERF?'true':'false'); b.textContent='Performance mode: '+(PERF?'on':'off'); }
   if(store){ try{localStorage.setItem(PERF_KEY,PERF?'1':'0');}catch(e){} }
 }
+function initTheme(){
+  const b=document.getElementById('themeBtn'); if(!b) return;
+  const dark=()=>document.documentElement.getAttribute('data-theme')==='dark'||(!document.documentElement.getAttribute('data-theme')&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches);
+  const paint=()=>{ const t=document.documentElement.getAttribute('data-theme'); b.textContent='Theme: '+(t||'auto')+' (tap for '+(dark()?'light':'dark')+')'; };
+  b.addEventListener('click',()=>{ const n=dark()?'light':'dark'; document.documentElement.setAttribute('data-theme',n); try{localStorage.setItem('periodic-roll-theme',n);}catch(e){} paint(); });
+  paint();
+}
 function initPerf(){
   let v=null; try{v=localStorage.getItem(PERF_KEY);}catch(e){}
   if(v===null){
@@ -2553,7 +2560,7 @@ function init(){
     if(cutDone) closeCut();
   });
   renderRebirth();
-  initPerf();
+  initPerf(); initTheme();
   setNote(); renderBoard();
   initBoard();
 }
