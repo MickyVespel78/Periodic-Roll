@@ -239,7 +239,8 @@ function rollOnce(L){
 // </logic>
 
 const $=id=>document.getElementById(id);
-const KEY='periodic-roll-v2', OLDKEY='periodic-roll-v1';
+const OLDKEY='periodic-roll-v1';
+let KEY='periodic-roll-v2';
 
 function fmt(n){
   if(!isFinite(n)) return 'max';
@@ -571,7 +572,7 @@ function buildSheet(){
 /* leaderboard */
 let DB=null, USER=null, myId=null, canPost=false, postBlocked=false, boardReady=false, gotSnap=false;
 let boardRows=[], lbMode='life', lbTok=0, lbTimer=null;
-let dirty=false, writing=false;
+let dirty=false, writing=false, cloudOn=false;
 
 function markDirty(){dirty=true;}
 function payload(){
@@ -600,7 +601,7 @@ function cleanRow(id,d){
     const ok=d.bestSq.every(s=>Array.isArray(s)&&(s.length===2||s.length===3)&&Number.isInteger(s[0])&&Number.isInteger(s[1])&&s[0]>=1&&s[0]<=N&&s[1]>=1&&s[1]<=N);
     if(ok) sq=d.bestSq.map(s=>[s[0],s[1],(s[2]>=1&&s[2]<=13)?s[2]:0]);
   }
-  return {id:String(id),life:num(d.life),bestOdds:num(d.bestOdds),level:Math.floor(num(d.level)),rolls:Math.floor(num(d.rolls)),found:Math.floor(num(d.found)),rebirths:Math.min(RB_MAX,Math.floor(num(d.rebirths))),sq:sq};
+  return {name:typeof d.name==='string'?d.name.slice(0,16):'',id:String(id),life:num(d.life),bestOdds:num(d.bestOdds),level:Math.floor(num(d.level)),rolls:Math.floor(num(d.rolls)),found:Math.floor(num(d.found)),rebirths:Math.min(RB_MAX,Math.floor(num(d.rebirths))),sq:sq};
 }
 function setNote(){
   const n=$('lbNote');
@@ -641,19 +642,19 @@ function renderLocalBoard(){
 }
 async function renderBoard(){
   const tok=++lbTok;
-  if(boardReady&&!DB){ renderLocalBoard(); return; }
+  if(boardReady&&!DB&&!cloudOn){ renderLocalBoard(); return; }
   const lifeRows=boardRows.filter(r=>r.life>0).sort((a,b)=>b.life-a.life).slice(0,15), bestRows=boardRows.filter(r=>r.bestOdds>0).sort((a,b)=>b.bestOdds-a.bestOdds).slice(0,15);
   const ids=[...new Set(lifeRows.concat(bestRows).map(r=>r.id))]; let ps={};
   if(USER&&ids.length){ try{ ps=await USER.profiles(ids); }catch(e){ ps={}; } }
   if(tok!==lbTok) return;
   const fill=(ol,rows,mode)=>{
     ol.textContent='';
-    if(!rows.length){ const li=document.createElement('li'); li.className='empty'; li.textContent=boardReady&&DB?'No scores yet. Roll a few times to be the first on the board.':''; ol.appendChild(li); return; }
+    if(!rows.length){ const li=document.createElement('li'); li.className='empty'; li.textContent=boardReady&&(DB||cloudOn)?'No scores yet. Roll a few times to be the first on the board.':''; ol.appendChild(li); return; }
     rows.forEach((r,i)=>{
       const li=document.createElement('li'); if(r.id===myId) li.className='me';
       const rk=document.createElement('span'); rk.className='rk'; rk.textContent=String(i+1);
       const who=document.createElement('div'); who.className='who';
-      const nm=document.createElement('span'); nm.className='nmx'; const p=ps[r.id]; nm.textContent=(p&&p.name)||'Player';
+      const nm=document.createElement('span'); nm.className='nmx'; const p=ps[r.id]; nm.textContent=(p&&p.name)||r.name||'Player';
       if(r.id===myId){ const em=document.createElement('em'); em.textContent='you'; nm.appendChild(em); }
       who.appendChild(nm);
       if(mode==='best'&&r.sq){ who.appendChild(miniEl(r.sq)); }
@@ -664,7 +665,32 @@ async function renderBoard(){
   };
   fill($('lbList'),lifeRows,'life'); fill($('lbList2'),bestRows,'best');
 }
+async function initBoardCloud(){
+  const A=window.PRAuth; boardReady=true; DB=null; myId=A.user?A.user.id:null;
+  const n=$('lbNote');
+  n.textContent=A.user?'Your score posts automatically every few seconds while you play.':'You are playing as a guest, so your scores are not posted. Create an account to join the worldwide leaderboard.';
+  const pull=async()=>{
+    const rows=await A.fetchBoard();
+    if(!rows){ n.textContent='The leaderboard is unavailable right now.'; return; }
+    boardRows=rows.map(r=>cleanRow(r.user_id,{name:r.username,life:r.life,bestOdds:r.best_odds,bestSq:r.best_sq,level:r.level,rolls:r.rolls,found:r.found,rebirths:r.rebirths})).filter(Boolean);
+    gotSnap=true; cloudOn=true; renderBoard();
+  };
+  await pull(); setInterval(pull,20000);
+  if(A.user){
+    if(S.rolls>0||A.seedCloud) markDirty();
+    const push=async()=>{
+      if(!dirty||writing) return; writing=true; dirty=false;
+      const p=payload();
+      const ok=await A.push({data:JSON.parse(JSON.stringify(S)),life:p.life,best_odds:p.bestOdds,best_sq:p.bestSq,level:p.level,rolls:p.rolls,found:p.found,rebirths:p.rebirths});
+      if(!ok) dirty=true; writing=false;
+    };
+    setInterval(push,8000); push();
+    document.addEventListener('visibilitychange',()=>{ if(document.hidden) push(); });
+    window.addEventListener('pagehide',push);
+  }
+}
 async function initBoard(){
+  if(window.PRAuth&&window.PRAuth.enabled){ try{ await initBoardCloud(); }catch(e){ $('lbNote').textContent='The leaderboard is unavailable right now.'; } return; }
   try{
     const c=window.claude;
     if(c&&typeof c.use==='function'){
@@ -2473,7 +2499,7 @@ function init(){
     clearTimeout(timer); clearTimeout(saveT);
     Object.assign(S,fresh());
     try{localStorage.removeItem(KEY);localStorage.removeItem(OLDKEY);}catch(e){}
-    paintAll(); renderWallet(); renderLists(); renderDisc(); updateUps(); syncAuto();
+    paintAll(); renderWallet(); renderLists(); renderDisc(); updateUps(); syncAuto(); markDirty();
     $('dexInfo').textContent='Select an element to see its odds.';
     doRoll(false);
   });
@@ -2510,13 +2536,15 @@ try{
   window.claude&&window.claude.hot&&window.claude.hot.snapshot&&window.claude.hot.snapshot(function(){return {S:S};});
 }catch(e){}
 const start=function(data){
+  if(window.PRAuth) KEY=window.PRAuth.key();
   load();
   if(data&&data.S) merge(data.S);
   S.up.speed=Math.min(10,Math.max(0,S.up.speed|0));
   init();
+  if(window.PRAuth) window.PRAuth.start();
 };
 try{
   if(window.claude&&window.claude.hot&&window.claude.hot.ready) window.claude.hot.ready(start);
-  else start(window.claude&&window.claude.hot?window.claude.hot.data:null);
+  else{ const d=window.claude&&window.claude.hot?window.claude.hot.data:null; if(window.PRAuth&&window.PRAuth.enabled) window.PRAuth.boot().then(()=>start(d),()=>start(d)); else start(d); }
 }catch(e){try{console.error(e&&e.stack?e.stack:e);}catch(_){} init();}
 })();

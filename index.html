@@ -19,6 +19,7 @@
       <h1>Periodic<span>Roll</span></h1>
       <p>Roll six tiles. Each one is an element with a number. Matches, words, names, compounds and number joins all make a roll rarer and pay more EXP.</p>
     </div>
+    <div class="acct" id="acctBar"></div>
     <dl class="wallet">
       <div><dt>EXP</dt><dd id="exp">0</dd></div>
       <div><dt>Level</dt><dd id="lvl">1</dd></div>
@@ -74,7 +75,7 @@
   </section>
 
   <section class="s-lb lbcard" aria-labelledby="h-lb">
-    <div class="sec-head"><h2 id="h-lb">Leaderboards</h2></div>
+    <div class="sec-head"><h2 id="h-lb">Worldwide leaderboards</h2></div>
     <p class="info" id="lbNote" aria-live="polite" style="margin-bottom:12px">Connecting to the leaderboard…</p>
     <div class="lbpair">
       <div><h3 class="lbh">Top EXP <small>lifetime</small></h3><ol class="lb" id="lbList"></ol></div>
@@ -181,6 +182,9 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/accounts.js"></script>
 <script src="js/game.js"></script>
 </body>
 </html>

@@ -608,3 +608,19 @@ button{font:inherit;color:inherit}
 .cut.k-rebirth .cab,.cut.k-rebirth .cut-top{display:none}
 .cut.k-one{--ou-p:#ffd98a;--ou-q:#fff2cc;--ou-cy:#fff2cc}
 @media (prefers-reduced-motion:reduce){.cut-title{animation:none}}
+
+/* accounts */
+.acct{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:10px 0}
+.acct:empty{display:none}
+.acct-who{font:500 13px var(--f-mono);color:var(--muted)}
+.acct-ov{position:fixed;inset:0;background:rgba(8,14,20,.6);display:grid;place-items:center;z-index:200;padding:16px}
+.acct-card{position:relative;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:var(--r);padding:22px;width:min(420px,100%);max-height:90vh;overflow:auto}
+.acct-card h2{margin:0 0 10px}
+.acct-card p{margin:0 0 10px;line-height:1.5;color:var(--muted)}
+.acct-card label{display:block;font:500 13px var(--f-mono);color:var(--muted);margin-bottom:12px}
+.acct-card input{display:block;width:100%;margin-top:4px;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--raise);color:var(--ink);font:500 15px var(--f-mono)}
+.acct-card input:focus-visible{outline:2px solid var(--focus);outline-offset:1px}
+.acct-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+.acct-card .buy{width:auto;padding:10px 16px}
+.acct-msg{min-height:1.2em;color:var(--c5)!important}
+.acct-x{position:absolute;top:8px;right:12px;border:0;background:none;color:var(--muted);font-size:26px;cursor:pointer}
