@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1B2B37"/><stop offset="1" stop-color="#0D1720"/></linearGradient>
+    <linearGradient id="ac" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF5C9A"/><stop offset="1" stop-color="#D6246E"/></linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <rect x="96" y="96" width="320" height="320" rx="40" fill="#F8FAFB"/>
+  <rect x="96" y="96" width="320" height="320" rx="40" fill="none" stroke="url(#ac)" stroke-width="14"/>
+  <text x="132" y="160" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="44" fill="#53626F">59</text>
+  <text x="256" y="338" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-weight="700" font-size="190" fill="#121C25">P<tspan fill="#D6246E">r</tspan></text>
+  <g fill="url(#ac)">
+    <circle cx="320" cy="150" r="13"/><circle cx="360" cy="150" r="13"/><circle cx="360" cy="190" r="13"/>
+    <circle cx="320" cy="190" r="13"/><circle cx="340" cy="170" r="0"/>
+  </g>
+  <text x="256" y="388" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="26" letter-spacing="6" fill="#53626F">ROLL</text>
+</svg>
