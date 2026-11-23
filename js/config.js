@@ -1,2 +1,2 @@
-/* Paste your two Supabase values here (Project Settings > API). The anon key is meant to be public. */
-window.PR_CONFIG = { url: '', key: '' };
+/* Supabase public settings (the publishable key is meant to be public; data is protected by row level security). */
+window.PR_CONFIG = { url: 'https://mlqogmrrdzxdtjgogpbg.supabase.co', key: 'sb_publishable_mHCr6rP4T_r3b46y06wknA_yxj0h9uR' };

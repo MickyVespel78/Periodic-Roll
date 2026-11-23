@@ -109,7 +109,10 @@ function modal(view){
           if(t.data&&t.data.length){msg.textContent='That username is taken.';go.disabled=false;return;}
           const r=await A.client.auth.signUp({email,password:pass,options:{data:{username:name}}});
           if(r.error){msg.textContent=r.error.message;go.disabled=false;return;}
-          if(!r.data.session){msg.textContent='Check your email to confirm your account, then log in.';go.disabled=false;return;}
+          if(!r.data.session){
+            const r2=await A.client.auth.signInWithPassword({email,password:pass});
+            if(r2.error){msg.textContent='Account created. Check your email to confirm it, then log in.';go.disabled=false;return;}
+          }
         }else{
           const r=await A.client.auth.signInWithPassword({email,password:pass});
           if(r.error){msg.textContent=r.error.message;go.disabled=false;return;}
