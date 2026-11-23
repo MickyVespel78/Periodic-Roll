@@ -8,7 +8,7 @@ const A={enabled,mode:'guest',user:null,name:'',client:null};
 window.PRAuth=A;
 const $=id=>document.getElementById(id);
 const ls={get(k){try{return localStorage.getItem(k);}catch(e){return null;}},set(k,v){try{localStorage.setItem(k,v);}catch(e){}},del(k){try{localStorage.removeItem(k);}catch(e){}}};
-A.key=()=>A.mode==='account'&&A.user?ACCT_KEY:GUEST_KEY;
+A.key=()=>A.mode==='account'&&A.user?ACCT_KEY+'-'+A.user.id:GUEST_KEY;
 const lifeOf=s=>{try{const o=JSON.parse(s);return +o.life||0;}catch(e){return -1;}};
 
 A.boot=async function(){
@@ -25,13 +25,12 @@ A.boot=async function(){
     const pr=await A.client.from('profiles').select('username').eq('id',u.id).maybeSingle();
     A.name=(pr.data&&pr.data.username)||(u.user_metadata&&u.user_metadata.username)||'Player';
     const r=await A.client.from('saves').select('data').eq('user_id',u.id).maybeSingle();
-    const local=ls.get(ACCT_KEY), guest=ls.get(GUEST_KEY);
+    const AK=ACCT_KEY+'-'+u.id, local=ls.get(AK);
     if(r.data&&r.data.data){
       const cloud=JSON.stringify(r.data.data);
       /* keep whichever has more lifetime EXP, so offline progress is never lost */
-      if(local&&lifeOf(local)>lifeOf(cloud)) A.seedCloud=true; else ls.set(ACCT_KEY,cloud);
-    }else if(!local&&guest){ ls.set(ACCT_KEY,guest); A.seedCloud=true; }
-    else A.seedCloud=true;
+      if(local&&lifeOf(local)>lifeOf(cloud)) A.seedCloud=true; else ls.set(AK,cloud);
+    }else A.seedCloud=true;
   }catch(e){ if(!A.user){A.mode='guest';} }
 };
 

@@ -624,3 +624,32 @@ button{font:inherit;color:inherit}
 .acct-card .buy{width:auto;padding:10px 16px}
 .acct-msg{min-height:1.2em;color:var(--c5)!important}
 .acct-x{position:absolute;top:8px;right:12px;border:0;background:none;color:var(--muted);font-size:26px;cursor:pointer}
+
+/* performance mode */
+body.perf :not(.cut):not(.cut *),body.perf :not(.cut):not(.cut *)::before,body.perf :not(.cut):not(.cut *)::after{animation:none!important;transition:none!important;box-shadow:none!important;text-shadow:none!important;backdrop-filter:none!important;filter:none!important}
+.gbtn[aria-pressed="true"]{border-color:var(--c1);color:var(--c1)}
+.toolbar{flex-wrap:wrap}
+
+/* phones */
+@media (max-width:700px){
+  .wrap{padding-inline:12px;gap:20px}
+  .brand p{display:none}
+  .wallet{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .wallet div{padding:8px 8px 8px 0}
+  .wallet dd{font-size:1.1rem}
+  .tray{gap:8px}
+  .row{display:block}
+  .controls{position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;align-items:center;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:color-mix(in srgb,var(--bg) 94%,transparent);border-top:1px solid var(--line)}
+  .controls .roll{flex:1 1 auto;min-height:52px;font-size:1.1rem}
+  .controls .roll kbd{display:none}
+  .controls .auto{flex:0 0 auto;padding:8px 10px}
+  .controls .auto small{display:none}
+  .controls .snd{flex:0 0 auto;min-height:44px;padding:0 10px}
+  body{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+  .buy,.gbtn,.reset,.pv{min-height:44px}
+  .lbpair{grid-template-columns:minmax(0,1fr)}
+  .lbcard .lb{max-height:300px}
+  .acct-card{padding:18px}
+  body.perf .cut canvas{image-rendering:auto}
+}
+@media (max-width:700px){.toolbar .gbtn{flex:1 1 0;padding:8px 6px;font-size:12px}}

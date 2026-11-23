@@ -240,6 +240,28 @@ function rollOnce(L){
 
 const $=id=>document.getElementById(id);
 const OLDKEY='periodic-roll-v1';
+/* performance mode: lighter canvas (1x pixels, 30 fps, no glow blur) and no decorative CSS effects */
+const PERF_KEY='periodic-roll-perf';
+let PERF=false, lastFx=0;
+try{
+  const d=Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype,'shadowBlur');
+  if(d&&d.set) Object.defineProperty(CanvasRenderingContext2D.prototype,'shadowBlur',{get:d.get,set:function(v){d.set.call(this,PERF?0:v);},configurable:true});
+}catch(e){}
+function setPerf(on,store){
+  PERF=!!on; document.body.classList.toggle('perf',PERF);
+  const b=document.getElementById('perfBtn');
+  if(b){ b.setAttribute('aria-pressed',PERF?'true':'false'); b.textContent='Performance mode: '+(PERF?'on':'off'); }
+  if(store){ try{localStorage.setItem(PERF_KEY,PERF?'1':'0');}catch(e){} }
+}
+function initPerf(){
+  let v=null; try{v=localStorage.getItem(PERF_KEY);}catch(e){}
+  if(v===null){
+    const weak=(navigator.hardwareConcurrency||8)<=6||(navigator.deviceMemory||8)<=4;
+    v=(window.matchMedia&&matchMedia('(pointer:coarse)').matches&&weak)?'1':'0';
+  }
+  setPerf(v==='1',false);
+  const b=document.getElementById('perfBtn'); if(b) b.addEventListener('click',()=>setPerf(!PERF,true));
+}
 let KEY='periodic-roll-v2';
 
 function fmt(n){
@@ -682,7 +704,7 @@ async function initBoardCloud(){
       if(!dirty||writing) return; writing=true; dirty=false;
       const p=payload();
       const ok=await A.push({data:JSON.parse(JSON.stringify(S)),life:p.life,best_odds:p.bestOdds,best_sq:p.bestSq,level:p.level,rolls:p.rolls,found:p.found,rebirths:p.rebirths});
-      if(!ok) dirty=true; writing=false;
+      if(!ok){ dirty=true; n.textContent='The server did not accept your latest save. If this keeps happening, your progress may look too fast to be real.'; } writing=false;
     };
     setInterval(push,8000); push();
     document.addEventListener('visibilitychange',()=>{ if(document.hidden) push(); });
@@ -1227,7 +1249,7 @@ const CUT_KIND={
 function clearCutTimers(){ cutT.forEach(clearTimeout); cutT=[]; clearInterval(cutTick); cutTick=null; clearInterval(cutCd); cutCd=null; }
 let HIQ=false;
 function sizeStars(){
-  const cv=$('stars'), d0=window.devicePixelRatio||1, dpr=HIQ?Math.min(3,Math.max(2,d0)):Math.min(2,d0);
+  const cv=$('stars'), d0=window.devicePixelRatio||1, dpr=PERF?1:(HIQ?Math.min(3,Math.max(2,d0)):Math.min(2,d0));
   cv.width=Math.max(1,Math.floor(cv.clientWidth*dpr)); cv.height=Math.max(1,Math.floor(cv.clientHeight*dpr));
   starCx=cv.getContext('2d'); if(starCx) starCx.setTransform(dpr,0,0,dpr,0,0);
 }
@@ -2244,6 +2266,8 @@ const SCENE={
 };
 function fxLoop(ts){
   if(!cutOpen||!fx||!cutCtx) return;
+  if(PERF&&ts-lastFx<32){ cutRaf=requestAnimationFrame(fxLoop); return; }
+  lastFx=ts;
   fxDraw(Math.max(0,ts-cutStart));
   cutRaf=requestAnimationFrame(fxLoop);
 }
@@ -2451,10 +2475,10 @@ function renderRebirth(){
 }
 function doRebirth(){
   const r=S.rebirths; if(r>=RB_MAX||S.exp<rbCost(r)) return;
-  const keep={found:S.found,words:S.words,rx:S.rx,top:S.top,recent:S.recent,secs:S.secs,dets:S.dets,tot:S.tot,life:S.life,best:S.best,outers:S.outers,stars:S.stars,impacts:S.impacts,systems:S.systems,holes:S.holes,beyonds:S.beyonds,multis:S.multis,unis:S.unis,omnis:S.omnis,absolutes:S.absolutes,ones:S.ones};
+  const keep={rolls:S.rolls,found:S.found,words:S.words,rx:S.rx,top:S.top,recent:S.recent,secs:S.secs,dets:S.dets,tot:S.tot,life:S.life,best:S.best,outers:S.outers,stars:S.stars,impacts:S.impacts,systems:S.systems,holes:S.holes,beyonds:S.beyonds,multis:S.multis,unis:S.unis,omnis:S.omnis,absolutes:S.absolutes,ones:S.ones};
   clearTimeout(timer);
   Object.assign(S,fresh());
-  S.found=keep.found; S.words=keep.words; S.rx=keep.rx; S.top=keep.top; S.recent=keep.recent;
+  S.rolls=keep.rolls; S.found=keep.found; S.words=keep.words; S.rx=keep.rx; S.top=keep.top; S.recent=keep.recent;
   S.tot=keep.tot; S.life=keep.life; S.best=keep.best; S.outers=keep.outers; S.stars=keep.stars; S.impacts=keep.impacts; S.systems=keep.systems; S.holes=keep.holes; S.beyonds=keep.beyonds; S.multis=keep.multis; S.unis=keep.unis; S.omnis=keep.omnis; S.absolutes=keep.absolutes; S.ones=keep.ones; S.dets=keep.dets; S.secs=keep.secs; S.rebirths=r+1;
   if(S.rebirths>=3){ S.up.auto=1; S.autoOn=true; }
   paintAll(); renderWallet(); renderLists(); renderDisc(); updateUps(); syncAuto();
@@ -2529,6 +2553,7 @@ function init(){
     if(cutDone) closeCut();
   });
   renderRebirth();
+  initPerf();
   setNote(); renderBoard();
   initBoard();
 }
