@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Periodic Roll</title>
+<meta name="description" content="Periodic Roll: an idle game where you roll six tiles of elements and numbers, chase rare mutations and rebirth.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%23e5287a'/%3E%3Ctext x='50' y='66' font-size='52' font-family='Georgia,serif' font-weight='700' text-anchor='middle' fill='white'%3EPr%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>Periodic<span>Roll</span></h1>
+      <p>Roll six tiles. Each one is an element with a number. Matches, words, names, compounds and number joins all make a roll rarer and pay more EXP.</p>
+    </div>
+    <dl class="wallet">
+      <div><dt>EXP</dt><dd id="exp">0</dd></div>
+      <div><dt>Level</dt><dd id="lvl">1</dd></div>
+      <div><dt>Rolls</dt><dd id="rolls">0</dd></div>
+      <div><dt>Elements found</dt><dd id="found">0 / 118</dd></div>
+      <div><dt>Best roll</dt><dd id="best">none yet</dd></div>
+      <div><dt>Luck</dt><dd id="luck">0.0</dd></div>
+      <div><dt>EXP bonus</dt><dd id="xm">&times;1.0</dd></div>
+    </dl>
+    <p class="msline" id="msLine"></p>
+    <div class="toolbar"><button type="button" class="gbtn" id="rarBtn" aria-expanded="false" aria-controls="rarPanel">Rarity guide</button></div>
+  </header>
+
+  <div class="layout">
+  <section class="bench s-bench" aria-labelledby="h-tray">
+    <h2 class="sr" id="h-tray">Rolling tray</h2>
+    <div id="tray" class="tray" role="group" aria-label="Six rolled tiles"></div>
+    <p class="legend">Corner number is the atomic number. The pill is the rolled number; when they match it is a Resonance. <i style="background:var(--hw)"></i>Word or name. <i style="background:var(--hx)"></i>Compound.</p>
+    <div class="row">
+      <div id="result" class="result t0">
+        <div class="surge" id="surge" hidden><span class="st" id="surgeTxt"></span><span class="bar"><i id="surgeBar"></i></span></div>
+        <div class="r-head"><span class="r-tier gt" id="rTier">Common</span><span class="r-gain" id="rGain"></span></div>
+        <div class="r-line"><span class="r-in">1 in</span><span class="r-odds gt" id="rOdds">0</span></div>
+        <ul class="chips" id="chips"></ul>
+        <p class="newel" id="newEl"></p>
+      </div>
+      <div class="controls">
+        <button id="rollBtn" class="roll" type="button">Roll <kbd>Space</kbd></button>
+        <label class="auto locked" id="autoBox"><input type="checkbox" id="autoChk" disabled><span>Auto-roll<small id="autoInfo">Buy the Auto-roller below</small></span></label>
+        <button type="button" class="snd" id="sndBtn" aria-pressed="true">Sound: on</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="s-up" aria-labelledby="h-up">
+    <div class="sec-head"><h2 id="h-up">Bench upgrades</h2><p class="info">Spend EXP. Rarer rolls pay far more.</p></div>
+    <div class="upgrid" id="upgrid"></div>
+  </section>
+
+  <section class="s-rb" aria-labelledby="h-rb">
+    <div class="sec-head"><h2 id="h-rb">Rebirth</h2><p class="info" id="rbNext"></p></div>
+    <div class="rb">
+      <dl class="rbstats">
+        <div><dt>Rebirths</dt><dd id="rbCount">0 / 10</dd></div>
+        <div><dt>Luck from rebirths</dt><dd id="rbLuck">+0.0</dd></div>
+        <div><dt>EXP bonus</dt><dd id="rbExp">&times;1.0</dd></div>
+        <div><dt>Next rebirth costs</dt><dd id="rbCost">0</dd></div>
+      </dl>
+      <progress id="rbProg" max="1" value="0" aria-label="EXP toward the next rebirth"></progress>
+      <p class="info">A rebirth resets your EXP and all upgrades, including Lucky isotopes. It keeps your element ledger, discoveries, words, reactions, lifetime EXP, best roll and mutation finds. Every rebirth adds 0.5 luck and 0.5 EXP bonus for good.</p>
+      <button type="button" id="rbBtn" class="buy" disabled>Rebirth 1</button>
+    </div>
+  </section>
+
+  <section class="s-lb lbcard" aria-labelledby="h-lb">
+    <div class="sec-head"><h2 id="h-lb">Leaderboards</h2></div>
+    <p class="info" id="lbNote" aria-live="polite" style="margin-bottom:12px">Connecting to the leaderboard…</p>
+    <div class="lbpair">
+      <div><h3 class="lbh">Top EXP <small>lifetime</small></h3><ol class="lb" id="lbList"></ol></div>
+      <div><h3 class="lbh">Best roll <small>rarest find</small></h3><ol class="lb" id="lbList2"></ol></div>
+    </div>
+  </section>
+
+  <section class="s-disc" aria-labelledby="h-disc">
+    <div class="sec-head"><h2 id="h-disc">Discoveries</h2><p class="info" id="discInfo"></p></div>
+    <div class="disc">
+      <div>
+        <h3 style="margin-bottom:8px">Words and names</h3>
+        <ul class="dchips w" id="wordList"></ul>
+      </div>
+      <div>
+        <h3 style="margin-bottom:8px">Compounds</h3>
+        <ul class="dchips x" id="rxList"></ul>
+      </div>
+      <div>
+        <h3 style="margin-bottom:8px">Mutations</h3>
+        <ul class="dchips m" id="outList"></ul>
+        <div class="pvrow" role="group" aria-label="Preview a mutation cutscene">
+          <button type="button" class="pv" data-k="rebirth">Preview Rebirth</button>
+          <button type="button" class="pv" data-k="planetary">Preview Planetary</button>
+          <button type="button" class="pv" data-k="star">Preview Star</button>
+          <button type="button" class="pv" data-k="impact">Preview Impact</button>
+          <button type="button" class="pv" data-k="system">Preview Solar System</button>
+          <button type="button" class="pv" data-k="blackhole">Preview Black Hole</button>
+          <button type="button" class="pv" data-k="beyond">Preview Beyond Space</button>
+          <button type="button" class="pv" data-k="universe">Preview Universe</button>
+          <button type="button" class="pv" data-k="multiverse">Preview Multiverse</button>
+          <button type="button" class="pv" data-k="omniverse">Preview Omniverse</button>
+          <button type="button" class="pv" data-k="determination">Preview Determination</button>
+          <button type="button" class="pv" data-k="absolute">Preview Absolute</button>
+          <button type="button" class="pv" data-k="one">Preview The One Before All</button>
+          <button type="button" class="pv" data-k="secret">Preview ???</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="s-dex" aria-labelledby="h-dex">
+    <div class="sec-head"><h2 id="h-dex">Element ledger</h2><p class="info" id="dexInfo" aria-live="polite">Select an element to see its odds.</p></div>
+    <div class="tablewrap"><div class="ptable" id="ptable"></div></div>
+  </section>
+
+  <div class="two">
+    <section aria-labelledby="h-top">
+      <div class="sec-head"><h2 id="h-top">Best finds</h2></div>
+      <ol class="finds" id="topList"></ol>
+    </section>
+    <section aria-labelledby="h-rec">
+      <div class="sec-head"><h2 id="h-rec">Recent rolls</h2></div>
+      <ol class="finds" id="recList"></ol>
+    </section>
+  </div>
+
+
+  </div>
+
+  <div class="foot">
+    <span>Progress saves in this browser. Leaderboard scores are self-reported.</span>
+    <button class="reset" id="resetBtn" type="button">Reset progress</button>
+  </div>
+</div>
+
+<div id="rarPanel" class="rar" hidden role="dialog" aria-modal="true" aria-labelledby="rarTitle">
+  <div class="rar-card">
+    <div class="sec-head"><h2 id="rarTitle">Rarity guide</h2><button type="button" class="gbtn" id="rarClose">Close</button></div>
+    <h3 style="margin:6px 0 10px">How you get each mutation</h3>
+    <ol class="mguide" id="mutGuide"></ol>
+    <h3 style="margin:18px 0 10px">How odds are scored</h3>
+    <div class="sheet-body" id="sheetBody"></div>
+  </div>
+</div>
+
+<div id="flash" class="flash" aria-hidden="true"></div>
+
+<div id="cut" class="cut" role="dialog" aria-modal="true" aria-labelledby="cutTitle" hidden>
+  <canvas id="stars" class="stars" aria-hidden="true"></canvas>
+  <div class="planet" aria-hidden="true"></div>
+  <div id="cutCard" class="cut-card">
+    <div id="cutTop" class="cut-top t0">
+      <p class="cut-kicker" id="cutKicker">Planetary roll</p>
+      <p class="cut-odds"><span>1 in</span><b id="cutOdds" class="gt">0</b></p>
+      <p class="cut-tier gt" id="cutTier">Common</p>
+    </div>
+    <h2 id="cutTitle" class="cut-title">Travelling to a Planetary world</h2>
+    <div class="cab" aria-hidden="true">
+      <div class="lights"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="reels">
+        <div class="reel"><div class="strip"></div></div>
+        <div class="reel"><div class="strip"></div></div>
+        <div class="reel"><div class="strip"></div></div>
+        <div class="reel"><div class="strip"></div></div>
+        <div class="reel"><div class="strip"></div></div>
+        <div class="reel"><div class="strip"></div></div>
+      </div>
+    </div>
+    <p id="cutSub" class="cut-sub" aria-live="polite"></p>
+    <div class="cut-actions">
+      <button type="button" id="cutOk" class="cbtn" hidden>Continue</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/game.js"></script>
+</body>
+</html>
