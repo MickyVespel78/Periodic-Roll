@@ -83,7 +83,7 @@ function mutate(L,R){
   return m;
 }
 
-const MUTN={1:'Planetary',2:'Star',3:'Impact',4:'Solar System',5:'Black Hole',6:'Beyond Space',7:'Multiverse',8:'Omniverse',9:'Absolute',10:'The One Before All',11:'Universe',12:'Determination',13:'???'}, MUTB={1:'PLANETARY',2:'STAR',3:'IMPACT',4:'SOLAR',5:'HOLE',6:'BEYOND',7:'MULTI',8:'OMNI',9:'ABSOLUTE',10:'THE ONE',11:'UNIVERSE',12:'DETERMINED',13:'???'}, MUTC={1:'pl',2:'st',3:'im',4:'so',5:'bh',6:'by',7:'mv',8:'ov',9:'ab',10:'on',11:'un',12:'de',13:'se'}, MUTK={1:'planet',2:'star',3:'impact',4:'system',5:'hole',6:'beyond',7:'multi',8:'omni',9:'abs',10:'one',11:'uni',12:'det',13:'sec'}, MUTM={1:PLAN_M,2:STAR_M,3:IMP_M,4:SYS_M,5:BH_M,6:BEY_M,7:MULTI_M,8:OMNI_M,9:ABS_M,10:ONE_M,11:UNI_M,12:DET_M,13:SEC_M};
+const MUTN={1:'Planetary',2:'Star',3:'Impact',4:'Solar System',5:'Black Hole',6:'Rift',7:'Multiverse',8:'Omniverse',9:'Absolute',10:'The One Before All',11:'Universe',12:'Determination',13:'???'}, MUTB={1:'PLANETARY',2:'STAR',3:'IMPACT',4:'SOLAR',5:'HOLE',6:'RIFT',7:'MULTI',8:'OMNI',9:'ABSOLUTE',10:'THE ONE',11:'UNIVERSE',12:'DETERMINED',13:'???'}, MUTC={1:'pl',2:'st',3:'im',4:'so',5:'bh',6:'by',7:'mv',8:'ov',9:'ab',10:'on',11:'un',12:'de',13:'se'}, MUTK={1:'planet',2:'star',3:'impact',4:'system',5:'hole',6:'beyond',7:'multi',8:'omni',9:'abs',10:'one',11:'uni',12:'det',13:'sec'}, MUTM={1:PLAN_M,2:STAR_M,3:IMP_M,4:SYS_M,5:BH_M,6:BEY_M,7:MULTI_M,8:OMNI_M,9:ABS_M,10:ONE_M,11:UNI_M,12:DET_M,13:SEC_M};
 /* exact chance that a roll ends with at least one tile of each mutation, at base luck (every random outcome enumerated, checked by simulation) */
 const ODDS={1:0.0009770913,2:0.0003215018,3:0.0002710323,4:0.0000903441,5:0.0002996517,6:0.0000369306,11:0.0000285662,7:0.0000199400,8:0.0000060180,9:0.0000028276,10:0.00000043964};
 const pctOf=p=>{const x=p*100, d=Math.min(8,Math.max(0,2-Math.floor(Math.log10(x)))); let t=x.toFixed(d); if(t.indexOf('.')>=0) t=t.replace(/0+$/,'').replace(/\.$/,''); return t+'%';};
@@ -505,8 +505,8 @@ function renderDisc(){
     [5,'3 in 10 Star tiles collapse into a Black Hole.',BH_M],
     [3,'A Planetary and a Star in the same roll collide and every one of them becomes Impact.',IMP_M],
     [4,'When an Impact forms, 1 time in 4 it becomes a Solar System instead.',SYS_M],
-    [6,'A Planetary, a Star and a Black Hole in the same roll, each on its own tile. All of them are pulled Beyond Space, and each other tile has a 2 in 5 chance to be dragged in too.',BEY_M],
-    [11,'The roll needs 2 or more Beyond Space tiles. Each one then has a 3 in 5 chance to become a Universe.',UNI_M],
+    [6,'A Planetary, a Star and a Black Hole in the same roll, each on its own tile. All of them are pulled into a Rift, and each other tile has a 2 in 5 chance to be dragged in too.',BEY_M],
+    [11,'The roll needs 2 or more Rift tiles. Each one then has a 3 in 5 chance to become a Universe.',UNI_M],
     [7,'2 Universe tiles in one roll. Each pair has a 7 in 10 chance to merge into a Multiverse.',MULTI_M],
     [8,'2 Multiverse tiles in one roll. Each pair has a 3 in 10 chance to fuse into an Omniverse.',OMNI_M],
     [12,'Needs at least one rebirth. Every roll has a small chance, higher with each rebirth. All mutated tiles in the roll become Determination (one random tile if none were mutated), and it outranks Omniverse. Never part of The One Before All.',DET_M],
@@ -515,7 +515,7 @@ function renderDisc(){
     [13,'Determination and The One Before All in the same roll. It came from you, and so did the other. Together it clicks.',SEC_M]];
   $('mutGuide').innerHTML=G.map(r=>{const sec=r[0]===13, found=sec&&Object.keys(S.secs).length>0; if(sec&&!found) return '<li><b>???</b> A secret. Nobody told you how. Find it.</li>'; const p=r[0]===12?detChance(S.rebirths):sec?ODDS[10]*detChance(Math.max(1,S.rebirths)):ODDS[r[0]]; return '<li'+(Object.keys(mutMap(r[0])).length?' class="got"':'')+'><b>'+MUTN[r[0]]+'</b> '+r[1]+'<span class="mgp">'+(sec?('<strong>about 1 in '+fmt(Math.round(1/p))+' rolls at your rebirth level</strong> · pays'):r[0]===12?('<strong>'+(p?pctOf(p)+' per roll now':'Locked until Rebirth 1')+'</strong> (Rebirth 1: 0.0001%, 2: 0.001%, 5: 0.01%, 10: 0.1%) · pays'):('<strong>'+pctOf(p)+' per roll</strong>, about 1 in '+fmt(Math.round(1/p))+' rolls · pays'))+' ×'+fmt(r[2])+' per tile</span></li>';}).join('')
     +'<li class="note">Chances are per roll at base luck. Luck, rebirths and spin milestones all raise them.</li>';
-  $('outList').innerHTML=mk.length?mk.join(''):'<li style="border:0;background:none;padding:0;color:var(--muted)">None yet. Any tile can turn Planetary (1 in 5,000) or Star (1 in 10,000), and one mutation can ripple onto the other tiles. A Planetary and a Star in one roll collide into an Impact, and one collision in four forms a Solar System. 3 in 10 Stars collapse into a Black Hole, and all three together become Beyond Space.</li>';
+  $('outList').innerHTML=mk.length?mk.join(''):'<li style="border:0;background:none;padding:0;color:var(--muted)">None yet. Any tile can turn Planetary (1 in 5,000) or Star (1 in 10,000), and one mutation can ripple onto the other tiles. A Planetary and a Star in one roll collide into an Impact, and one collision in four forms a Solar System. 3 in 10 Stars collapse into a Black Hole, and all three together become Rift.</li>';
 }
 
 /* rolling */
@@ -557,6 +557,7 @@ async function doRollRemote(auto){
   catch(e){ rolling=false; if(!e.slow) netNote(e.message||'Could not reach the server.'); return; }
   rolling=false;
   if(!res||!res.p) return;
+  { const ren=o=>JSON.parse(JSON.stringify(o).replace(/Beyond Space/g,'Rift').replace(/BEYOND SPACE/g,'RIFT')); res.p=ren(res.p); res.notes=ren(res.notes||[]); }
   applyRemote(res);
   if(res.ms) msToast();
   present(res.p,res.notes||[],res.outs||[],!!res.rec,auto);
@@ -606,8 +607,8 @@ function buildSheet(){
   rows.push(['Impact tile (a Planetary and a Star in the same roll collide), each','×'+fmt(IMP_M)]);
   rows.push(['Solar System tile (one collision in four becomes this instead of an Impact), each','×'+fmt(SYS_M)]);
   rows.push(['Black Hole tile (3 in 10 Star tiles collapse into one), each','×'+fmt(BH_M)]);
-  rows.push(['Beyond Space tile (a Planetary, a Star and a Black Hole in one roll), each','×'+fmt(BEY_M)]);
-  rows.push(['Universe tile (with 2 or more Beyond Space tiles, each one has a 3 in 5 chance), each','×'+fmt(UNI_M)]);
+  rows.push(['Rift tile (a Planetary, a Star and a Black Hole in one roll), each','×'+fmt(BEY_M)]);
+  rows.push(['Universe tile (with 2 or more Rift tiles, each one has a 3 in 5 chance), each','×'+fmt(UNI_M)]);
   rows.push(['Multiverse tile (2 Universe tiles merge, 7 in 10 chance per pair), each','×'+fmt(MULTI_M)]);
   rows.push(['Omniverse tile (2 Multiverse tiles fuse, 3 in 10 chance per pair), each','×'+fmt(OMNI_M)]);
   rows.push(['Determination tile (after a rebirth: 0.0001% a roll at Rebirth 1 up to 0.1% at Rebirth 10; outranks Omniverse), each','×'+fmt(DET_M)]);
@@ -623,7 +624,7 @@ function buildSheet(){
     +'</tbody></table></div>'
     +'<p>Seventeen roll tiers:</p><ul class="tierlist">'+tiers+'</ul>'
     +'<p>Each roll pays EXP equal to its odds raised to the power 0.7. Level rises with lifetime EXP.</p>'
-    +'<p>Planetary, Star, Impact and Solar System tiles are rare mutations of any element. One collision in four forms a Solar System instead of an Impact, so it is four times rarer and pays far more. Three Stars in ten collapse into a Black Hole instead. If a Planetary, a Star and a Black Hole all show up in the same roll, they are pulled together into Beyond Space. From there a roll can climb to Universe, Multiverse, Omniverse and Absolute, and when all six tiles are Absolute they become The One Before All, the rarest mutation of all. Spin milestones (100 rolls up to 1,000,000, kept through rebirths) each add a little luck and mutation chance. When a cutscene ends the game carries on by itself after 10 seconds if you have not pressed Continue. Each has its own cutscene before a six reel slot machine, and none can be skipped. Rebirth costs start at '+fmt(rbCost(0))+' EXP and grow 3 times with each rebirth, up to '+RB_MAX+'. Each rebirth resets all upgrades, Lucky isotopes included, but adds 0.5 luck and a 0.5 EXP bonus for good. The third rebirth gives a free Auto-roller. A new best roll of at least 1 in '+fmt(REC_MIN)+' gives +'+BOOST_LUCK+' luck for '+(BOOST_MS/1000)+' seconds.</p>';
+    +'<p>Planetary, Star, Impact and Solar System tiles are rare mutations of any element. One collision in four forms a Solar System instead of an Impact, so it is four times rarer and pays far more. Three Stars in ten collapse into a Black Hole instead. If a Planetary, a Star and a Black Hole all show up in the same roll, they are pulled together into Rift. From there a roll can climb to Universe, Multiverse, Omniverse and Absolute, and when all six tiles are Absolute they become The One Before All, the rarest mutation of all. Spin milestones (100 rolls up to 1,000,000, kept through rebirths) each add a little luck and mutation chance. When a cutscene ends the game carries on by itself after 10 seconds if you have not pressed Continue. Each has its own cutscene before a six reel slot machine, and none can be skipped. Rebirth costs start at '+fmt(rbCost(0))+' EXP and grow 3 times with each rebirth, up to '+RB_MAX+'. Each rebirth resets all upgrades, Lucky isotopes included, but adds 0.5 luck and a 0.5 EXP bonus for good. The third rebirth gives a free Auto-roller. A new best roll of at least 1 in '+fmt(REC_MIN)+' gives +'+BOOST_LUCK+' luck for '+(BOOST_MS/1000)+' seconds.</p>';
 }
 
 /* leaderboard */
@@ -1260,7 +1261,7 @@ const CUT_KIND={
   impact:{kick:'Impact roll',first:'A planet and a star are on a collision course',arrive:3800},
   system:{kick:'Solar System roll',first:'A planet and a star are on a collision course',arrive:5600},
   blackhole:{kick:'Black Hole roll',first:'A dying star begins to collapse',arrive:4500},
-  beyond:{kick:'Beyond Space roll',first:'A planet, a star and a black hole are aligned',arrive:6700},
+  beyond:{kick:'Rift roll',first:'A planet, a star and a black hole are aligned',arrive:6700},
   universe:{kick:'Universe roll',first:'Zooming out from a single world',arrive:6300},
   multiverse:{kick:'Multiverse roll',first:'One universe splits into many',arrive:6000},
   omniverse:{kick:'Omniverse roll',first:'Every universe branches',arrive:6700},
@@ -2232,7 +2233,7 @@ const SCENE={
       else if(i===2) fireball(g,x,y,700+Math.sin(ct/300)*80,s*1.2,PAL.fire,0.9);
       else if(i===3){ g.strokeStyle='rgba(255,255,255,0.22)'; g.beginPath(); g.ellipse(x,y,s*1.4,s*0.55,-0.2,0,TAU); g.stroke(); sun(g,x,y,s*0.4,{t:ct}); planet(g,x+s*1.15,y-s*0.15,s*0.2,{tex:'earth',rot:ct*0.0002}); }
       else if(i===4) hole(g,x,y,s*0.5,ct,{});
-      else if(i===5){ g.globalCompositeOperation='lighter'; for(let q=0;q<4;q++){ g.strokeStyle='hsla('+(q*60+ct*0.05)+',90%,65%,0.75)'; g.lineWidth=2; g.beginPath(); g.arc(x,y,s*(1.1-q*0.26),0,TAU); g.stroke(); } g.globalCompositeOperation='source-over'; }
+      else if(i===5){ riftDraw(g,x,y,s*1.6,s*0.5,ct,-0.3,false); }
       else if(i===6){ gal(g,x,y,s*1.15,ct*0.0005,'160,200,255',110); }
       else if(i===7){ pane(g,x-s*0.8,y,s*1.1,-0.8,0,0.9); pane(g,x+s*0.8,y,s*1.1,0.8,2,0.9); pane(g,x,y,s*1.3,0,1,1); }
       else if(i===8){ flower(g,x,y,s*0.55,ct*0.0004,6,'255,215,140',0.95,1,4,false); }
@@ -2386,7 +2387,7 @@ function playCutscene(p,outs,kind,preview,extra){
   }
   if(!reduce&&kind==='beyond'){
     cutT.push(setTimeout(()=>{ $('cutTitle').textContent='Everything is falling in'; },1400));
-    cutT.push(setTimeout(()=>{ $('cutTitle').textContent='BEYOND SPACE'; },T_BEY));
+    cutT.push(setTimeout(()=>{ $('cutTitle').textContent='RIFT'; },T_BEY));
     cutT.push(setTimeout(()=>startAmb(36.71,55),T_BEY+400));
   }
   if(!reduce&&kind==='universe'){
