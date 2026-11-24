@@ -2449,7 +2449,7 @@ function finishCut(){
   outs.forEach(o=>{ const k=MUTN[o.m]+' '+NAME[o.z-1]; og[k]=(og[k]||0)+1; });
   document.querySelectorAll('#cut .reel').forEach(rl=>rl.classList.add('landed'));
   $('cutCard').classList.add('win');
-  $('cutTitle').textContent=Object.keys(og).map(k=>k+(og[k]>1?' x'+og[k]:'')).join(', ');
+  $('cutTitle').textContent=(kind==='one')?'THE ONE BEFORE ALL':Object.keys(og).map(k=>k+(og[k]>1?' x'+og[k]:'')).join(', ');
   $('cutSub').textContent=p.sq.map(s=>SYM[s[0]-1]+' №'+s[1]).join('  ·  ')+(cutCtx.preview?'. Preview only. Nothing is awarded.':('. +'+fmt(p.gain)+' EXP.'+((S.autoOn&&S.up.auto>0)?' Auto-roll resumes when you continue or after 10 seconds.':'')));
   $('cutOk').hidden=false; $('cutOk').focus();
   sndWin(kind);
