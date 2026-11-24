@@ -1,6 +1,6 @@
 /* Layout concept: a lab bench. A six-tile rolling tray on top with the odds readout and controls beneath it, then upgrades, the shared leaderboard, discoveries, and the periodic table as the collection ledger. */
 :root{
-  --bg:#EAEEF1; --surface:#F8FAFB; --raise:#FFFFFF; --ink:#121C25; --muted:#53626F; --line:#C9D2D9;
+  --bg:#F5F6FA; --surface:#FFFFFF; --raise:#FFFFFF; --ink:#111A26; --muted:#566275; --line:#D9DEE8;
   --accent:#D6246E; --accent-ink:#FFFFFF; --focus:#1F63D6;
   --hw:#0B78C2; --hx:#C2410C;
   --c0:#5A6977; --c1:#1C8349; --c2:#1F63D6; --c3:#7A3FD1; --c4:#A86605; --c5:#D1311F;
@@ -474,7 +474,7 @@ button{font:inherit;color:inherit}
 /* record luck surge */
 @keyframes flash{0%{opacity:0}18%{opacity:1}100%{opacity:0}}
 @keyframes surgepulse{0%,100%{filter:none}50%{filter:brightness(1.35)}}
-.flash{position:fixed;inset:0;z-index:40;pointer-events:none;opacity:0;background:radial-gradient(60% 50% at 50% 40%,color-mix(in srgb,var(--c4) 55%,transparent),transparent 70%)}
+.flash{position:fixed;inset:0;z-index:40;pointer-events:none;opacity:0;background:radial-gradient(60% 50% at 50% 40%,color-mix(in srgb,var(--c4) 32%,transparent),transparent 70%)}
 .flash.go{animation:flash 1s ease-out}
 .surge{display:grid;gap:5px}
 .surge .st{font:700 13px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--c4)}
