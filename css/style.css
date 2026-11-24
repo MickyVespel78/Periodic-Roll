@@ -1,6 +1,7 @@
 /* Layout concept: a lab bench. A six-tile rolling tray on top with the odds readout and controls beneath it, then upgrades, the shared leaderboard, discoveries, and the periodic table as the collection ledger. */
 :root{
-  --bg:#F5F6FA; --surface:#FFFFFF; --raise:#FFFFFF; --ink:#111A26; --muted:#566275; --line:#D9DEE8;
+  --tint:5%; --shadow:0 1px 2px rgba(17,26,38,.06),0 6px 16px rgba(17,26,38,.05);
+  --bg:#F4F5F9; --surface:#FFFFFF; --raise:#FFFFFF; --ink:#111A26; --muted:#566275; --line:#D9DEE8;
   --accent:#D6246E; --accent-ink:#FFFFFF; --focus:#1F63D6;
   --hw:#0B78C2; --hx:#C2410C;
   --c0:#5A6977; --c1:#1C8349; --c2:#1F63D6; --c3:#7A3FD1; --c4:#A86605; --c5:#D1311F;
@@ -25,6 +26,7 @@
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
+    --tint:10%; --shadow:none;
     --bg:#0D1720; --surface:#15222C; --raise:#1B2B37; --ink:#E7EDF1; --muted:#93A3B0; --line:#2A3A47;
     --accent:#FF5C9A; --accent-ink:#1A0610; --focus:#7FB0FF;
     --hw:#5CC8FF; --hx:#FF9A5C;
@@ -45,6 +47,7 @@
   }
 }
 :root[data-theme="dark"]{
+  --tint:10%; --shadow:none;
   --bg:#0D1720; --surface:#15222C; --raise:#1B2B37; --ink:#E7EDF1; --muted:#93A3B0; --line:#2A3A47;
   --accent:#FF5C9A; --accent-ink:#1A0610; --focus:#7FB0FF;
   --hw:#5CC8FF; --hx:#FF9A5C;
@@ -122,7 +125,7 @@ button{font:inherit;color:inherit}
 @media (min-width:760px){.tray{grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}}
 .sq{
   container-type:inline-size;aspect-ratio:1/1.2;min-width:0;
-  background:color-mix(in srgb,var(--tier) 10%,var(--raise));
+  background:color-mix(in srgb,var(--tier) var(--tint),var(--raise));box-shadow:var(--shadow);
   border:1.5px solid var(--tier);border-radius:8px;padding:8px 9px;
   display:grid;grid-template-rows:auto 1fr auto auto;gap:2px;overflow:hidden;position:relative;
 }
@@ -156,7 +159,7 @@ button{font:inherit;color:inherit}
 .row{display:flex;flex-wrap:wrap;gap:14px;align-items:stretch}
 .result{
   flex:1 1 320px;min-width:0;display:grid;gap:8px;padding:16px 18px;border:1.5px solid var(--tier);
-  border-radius:var(--r);background:color-mix(in srgb,var(--tier) 9%,var(--surface));align-content:start
+  border-radius:var(--r);background:color-mix(in srgb,var(--tier) var(--tint),var(--surface));box-shadow:var(--shadow);align-content:start
 }
 .r-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .r-tier{font:600 12px var(--f-mono);letter-spacing:.14em;text-transform:uppercase}
@@ -653,3 +656,6 @@ body.perf :not(.cut):not(.cut *),body.perf :not(.cut):not(.cut *)::before,body.p
   body.perf .cut canvas{image-rendering:auto}
 }
 @media (max-width:700px){.toolbar .gbtn{flex:1 1 0;padding:8px 6px;font-size:12px}}
+.surge[hidden]{display:none}
+
+.up,.lbcard,.rbcard,.dexcard,.auto,.gbtn{box-shadow:var(--shadow)}
