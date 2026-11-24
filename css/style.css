@@ -1,22 +1,22 @@
 /* Layout concept: a lab bench. A six-tile rolling tray on top with the odds readout and controls beneath it, then upgrades, the shared leaderboard, discoveries, and the periodic table as the collection ledger. */
 :root{
   --tint:5%; --shadow:0 1px 2px rgba(17,26,38,.06),0 6px 16px rgba(17,26,38,.05);
-  --bg:#F4F5F9; --surface:#FFFFFF; --raise:#FFFFFF; --ink:#111A26; --muted:#566275; --line:#D9DEE8;
-  --accent:#D6246E; --accent-ink:#FFFFFF; --focus:#1F63D6;
-  --hw:#0B78C2; --hx:#C2410C;
-  --c0:#5A6977; --c1:#1C8349; --c2:#1F63D6; --c3:#7A3FD1; --c4:#A86605; --c5:#D1311F;
-  --c6:#0A8F8A; --c6b:#D6246E;
-  --c7:#0B78C2; --c7b:#7A3FD1;
-  --c8:#5B3FD6; --c8b:#C21E9A;
-  --c9:#B3123F; --c9b:#B87400;
-  --c10:#D6246E; --c10b:#0A8F8A; --c10c:#5B3FD6;
-  --c11:#B8860B; --c11b:#D6246E; --c11c:#0B78C2;
-  --c12:#2B2B7A; --c12b:#7A3FD1; --c12c:#C21E9A;
-  --c13:#8A6B00; --c13b:#D1311F; --c13c:#0A8F8A; --c13d:#5B3FD6;
-  --c14:#0A8F4A; --c14b:#0B78C2;
-  --c15:#B8860B; --c15b:#D6246E; --c15c:#5B3FD6;
-  --c16:#111; --c16b:#C21E1E; --c16c:#555;
-  --c17:#111; --c17b:#8A6B00;
+  --bg:#F6F7FB; --surface:#FFFFFF; --raise:#FFFFFF; --ink:#0F172A; --muted:#5B6478; --line:#E1E5EE;
+  --accent:#E11D74; --accent-ink:#FFFFFF; --focus:#2563EB;
+  --hw:#0284C7; --hx:#EA580C;
+  --c0:#64748B; --c1:#059669; --c2:#2563EB; --c3:#7C3AED; --c4:#D97706; --c5:#DC2626;
+  --c6:#0D9488; --c6b:#E11D74;
+  --c7:#0284C7; --c7b:#7C3AED;
+  --c8:#4F46E5; --c8b:#C026D3;
+  --c9:#BE123C; --c9b:#D97706;
+  --c10:#E11D74; --c10b:#0D9488; --c10c:#4F46E5;
+  --c11:#CA8A04; --c11b:#E11D74; --c11c:#0284C7;
+  --c12:#312E81; --c12b:#7C3AED; --c12c:#C026D3;
+  --c13:#CA8A04; --c13b:#DC2626; --c13c:#0D9488; --c13d:#4F46E5;
+  --c14:#16A34A; --c14b:#0284C7;
+  --c15:#CA8A04; --c15b:#E11D74; --c15c:#4F46E5;
+  --c16:#0F172A; --c16b:#DC2626; --c16c:#64748B;
+  --c17:#0F172A; --c17b:#CA8A04;
   --f-display:"Bricolage Grotesque","Arial Narrow",system-ui,sans-serif;
   --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
