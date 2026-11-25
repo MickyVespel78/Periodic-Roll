@@ -35,7 +35,7 @@
       <div><dt>EXP bonus</dt><dd id="xm">&times;1.0</dd></div>
     </dl>
     <p class="msline" id="msLine"></p>
-    <div class="toolbar"><button type="button" class="gbtn" id="rarBtn" aria-expanded="false" aria-controls="rarPanel">Rarity guide</button><button type="button" class="gbtn" id="themeBtn">Theme: auto</button><button type="button" class="gbtn" id="perfBtn" aria-pressed="false">Performance mode: off</button></div>
+    <div class="toolbar"><button type="button" class="gbtn" id="rarBtn" aria-expanded="false" aria-controls="rarPanel">Rarity guide</button><button type="button" class="gbtn" id="idxBtn" aria-expanded="false" aria-controls="idxPanel">Index</button><button type="button" class="gbtn" id="ownBtn" hidden>Owner tools</button><button type="button" class="gbtn" id="themeBtn">Theme: auto</button><button type="button" class="gbtn" id="perfBtn" aria-pressed="false">Performance mode: off</button></div>
   </header>
 
   <div class="layout">
@@ -88,8 +88,37 @@
     </div>
   </section>
 
-  <section class="s-disc" aria-labelledby="h-disc">
-    <div class="sec-head"><h2 id="h-disc">Discoveries</h2><p class="info" id="discInfo"></p></div>
+
+  <section class="s-dex" aria-labelledby="h-dex">
+    <div class="sec-head"><h2 id="h-dex">Element ledger</h2><p class="info" id="dexInfo" aria-live="polite">Select an element to see its odds.</p></div>
+    <div class="tablewrap"><div class="ptable" id="ptable"></div></div>
+  </section>
+
+  <div class="two">
+    <section aria-labelledby="h-top">
+      <div class="sec-head"><h2 id="h-top">Best finds</h2></div>
+      <ol class="finds" id="topList"></ol>
+    </section>
+    <section aria-labelledby="h-rec">
+      <div class="sec-head"><h2 id="h-rec">Recent rolls</h2></div>
+      <ol class="finds" id="recList"></ol>
+    </section>
+  </div>
+
+
+  </div>
+
+  <div class="foot">
+    <span>Progress saves in this browser. Leaderboard scores are checked by the server.</span>
+    <button class="reset" id="resetBtn" type="button">Reset progress</button>
+  </div>
+</div>
+
+<div id="idxPanel" class="rar" hidden role="dialog" aria-modal="true" aria-labelledby="idxTitle">
+  <div class="rar-card">
+    <div class="sec-head"><h2 id="idxTitle">Index</h2><button type="button" class="gbtn" id="idxClose">Close</button></div>
+  <div class="s-disc">
+    <p class="info" id="discInfo"></p>
     <div class="disc">
       <div>
         <h3 style="margin-bottom:8px">Words and names</h3>
@@ -120,30 +149,18 @@
         </div>
       </div>
     </div>
-  </section>
-
-  <section class="s-dex" aria-labelledby="h-dex">
-    <div class="sec-head"><h2 id="h-dex">Element ledger</h2><p class="info" id="dexInfo" aria-live="polite">Select an element to see its odds.</p></div>
-    <div class="tablewrap"><div class="ptable" id="ptable"></div></div>
-  </section>
-
-  <div class="two">
-    <section aria-labelledby="h-top">
-      <div class="sec-head"><h2 id="h-top">Best finds</h2></div>
-      <ol class="finds" id="topList"></ol>
-    </section>
-    <section aria-labelledby="h-rec">
-      <div class="sec-head"><h2 id="h-rec">Recent rolls</h2></div>
-      <ol class="finds" id="recList"></ol>
-    </section>
   </div>
-
-
   </div>
+</div>
 
-  <div class="foot">
-    <span>Progress saves in this browser. Leaderboard scores are checked by the server.</span>
-    <button class="reset" id="resetBtn" type="button">Reset progress</button>
+<div id="ownPanel" class="rar" hidden role="dialog" aria-modal="true" aria-labelledby="ownTitle">
+  <div class="rar-card" style="max-width:520px">
+    <div class="sec-head"><h2 id="ownTitle">Owner tools</h2><button type="button" class="gbtn" id="ownClose">Close</button></div>
+    <p class="info">Unlock any element with any mutation. It goes into your Index and element ledger and plays the cutscene. It does not change your EXP, rolls or leaderboard score.</p>
+    <label class="own-l">Element<select id="ownEl"></select></label>
+    <label class="own-l">Mutation<select id="ownMut"></select></label>
+    <p class="acct-msg" id="ownMsg" aria-live="polite"></p>
+    <button type="button" class="buy" id="ownGo">Give</button>
   </div>
 </div>
 

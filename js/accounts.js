@@ -26,6 +26,7 @@ A.boot=async function(){
     A.name=(pr.data&&pr.data.username)||(u.user_metadata&&u.user_metadata.username)||'Player';
     const r=await A.call('state');
     A.serverState=r.S; A.bl=r.bl||0;
+    try{ const w=await A.client.functions.invoke('admin',{body:{action:'whoami'}}); A.owner=!!(w.data&&w.data.owner); }catch(e){ A.owner=false; }
   }catch(e){ A.user=null; A.mode='guest'; A.bootErr=(e&&e.message)||'Could not reach the server.'; }
 };
 
@@ -65,6 +66,7 @@ function bar(){
   if(!A.enabled){ return; }
   if(A.mode==='account'&&A.user){
     host.appendChild(el('span','acct-who','Account: '+A.name));
+    if(A.owner) host.appendChild(el('b','ownertag','OWNER'));
     const b=el('button','reset','Log out'); b.type='button'; b.addEventListener('click',A.signOut); host.appendChild(b);
   }else{
     host.appendChild(el('span','acct-who','Guest (saved in this browser only)'));

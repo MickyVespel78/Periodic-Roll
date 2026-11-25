@@ -659,3 +659,8 @@ body.perf :not(.cut):not(.cut *),body.perf :not(.cut):not(.cut *)::before,body.p
 .surge[hidden]{display:none}
 
 .up,.lbcard,.rbcard,.dexcard,.auto,.gbtn{box-shadow:var(--shadow)}
+
+.ownertag{display:inline-block;margin-left:8px;padding:1px 7px;border-radius:999px;background:linear-gradient(135deg,#FFB547,#FF5C9A);color:#1A0610;font:700 10px var(--f-mono);letter-spacing:.12em;vertical-align:middle}
+.own-l{display:block;font:500 13px var(--f-mono);color:var(--muted);margin:12px 0}
+.own-l select{display:block;width:100%;margin-top:4px;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--raise);color:var(--ink);font:500 15px var(--f-mono)}
+#ownPanel .buy{width:auto;padding:10px 18px}

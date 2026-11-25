@@ -659,7 +659,7 @@ function cleanRow(id,d){
     const ok=d.bestSq.every(s=>Array.isArray(s)&&(s.length===2||s.length===3)&&Number.isInteger(s[0])&&Number.isInteger(s[1])&&s[0]>=1&&s[0]<=N&&s[1]>=1&&s[1]<=N);
     if(ok) sq=d.bestSq.map(s=>[s[0],s[1],(s[2]>=1&&s[2]<=13)?s[2]:0]);
   }
-  return {name:typeof d.name==='string'?d.name.slice(0,16):'',id:String(id),life:num(d.life),bestOdds:num(d.bestOdds),level:Math.floor(num(d.level)),rolls:Math.floor(num(d.rolls)),found:Math.floor(num(d.found)),rebirths:Math.min(RB_MAX,Math.floor(num(d.rebirths))),sq:sq};
+  return {owner:!!d.owner,name:typeof d.name==='string'?d.name.slice(0,16):'',id:String(id),life:num(d.life),bestOdds:num(d.bestOdds),level:Math.floor(num(d.level)),rolls:Math.floor(num(d.rolls)),found:Math.floor(num(d.found)),rebirths:Math.min(RB_MAX,Math.floor(num(d.rebirths))),sq:sq};
 }
 function setNote(){
   const n=$('lbNote');
@@ -713,6 +713,7 @@ async function renderBoard(){
       const rk=document.createElement('span'); rk.className='rk'; rk.textContent=String(i+1);
       const who=document.createElement('div'); who.className='who';
       const nm=document.createElement('span'); nm.className='nmx'; const p=ps[r.id]; nm.textContent=(p&&p.name)||r.name||'Player';
+      if(r.owner){ const ow=document.createElement('b'); ow.className='ownertag'; ow.textContent='OWNER'; nm.appendChild(ow); }
       if(r.id===myId){ const em=document.createElement('em'); em.textContent='you'; nm.appendChild(em); }
       who.appendChild(nm);
       if(mode==='best'&&r.sq){ who.appendChild(miniEl(r.sq)); }
@@ -730,7 +731,7 @@ async function initBoardCloud(){
   const pull=async()=>{
     const rows=await A.fetchBoard();
     if(!rows){ n.textContent='The leaderboard is unavailable right now.'; return; }
-    boardRows=rows.map(r=>cleanRow(r.user_id,{name:r.username,life:r.life,bestOdds:r.best_odds,bestSq:r.best_sq,level:r.level,rolls:r.rolls,found:r.found,rebirths:r.rebirths})).filter(Boolean);
+    boardRows=rows.map(r=>cleanRow(r.user_id,{name:r.username,life:r.life,bestOdds:r.best_odds,bestSq:r.best_sq,owner:r.is_owner,level:r.level,rolls:r.rolls,found:r.found,rebirths:r.rebirths})).filter(Boolean);
     gotSnap=true; cloudOn=true; renderBoard();
   };
   await pull(); setInterval(pull,20000);
@@ -2472,8 +2473,37 @@ function closeCut(){
   const af=cutCtx&&cutCtx.after; cutCtx=null; if(af) af();
   if(pendingBoost){ pendingBoost=false; startBoost(); }
 }
+/* owner tools: the server checks the owners list, the page only asks */
+const MKIND={1:'planetary',2:'star',3:'impact',4:'system',5:'blackhole',6:'beyond',7:'multiverse',8:'omniverse',9:'absolute',10:'one',11:'universe',12:'determination',13:'secret'};
+function initOwner(){
+  const A=window.PRAuth; if(!A||!A.owner) return;
+  const btn=$('ownBtn'), pn=$('ownPanel'), el=$('ownEl'), mu=$('ownMut'), msg=$('ownMsg');
+  btn.hidden=false;
+  for(let z=1;z<=N;z++){ const o=document.createElement('option'); o.value=z; o.textContent=z+'  '+SYM[z-1]+'  '+NAME[z-1]; el.appendChild(o); }
+  for(let m=1;m<=13;m++){ const o=document.createElement('option'); o.value=m; o.textContent=MUTN[m]; mu.appendChild(o); }
+  const set=o=>{ pn.hidden=!o; msg.textContent=''; };
+  btn.addEventListener('click',()=>set(pn.hidden));
+  $('ownClose').addEventListener('click',()=>set(false));
+  pn.addEventListener('click',e=>{ if(e.target===pn) set(false); });
+  $('ownGo').addEventListener('click',async()=>{
+    if(rolling||busy) return;
+    const z=+el.value, m=+mu.value; rolling=true; msg.textContent='Working…';
+    try{
+      const r=await A.client.functions.invoke('admin',{body:{action:'give',z,m}});
+      if(r.error||!r.data||r.data.error){ let t='Could not do that.'; try{ const j=await r.error.context.json(); t=j.error||t; }catch(e){ if(r.data&&r.data.error) t=r.data.error; } msg.textContent=t; rolling=false; return; }
+      applyRemote(r.data); rolling=false; msg.textContent='';
+      paintAll(); renderWallet(); renderLists(); renderDisc(); updateUps(); renderRebirth();
+      set(false);
+      const sq=[]; for(let i=0;i<6;i++) sq.push({z:pickZ(0),n:1+Math.floor(Math.random()*N),m:0});
+      sq[0].z=z; sq[0].m=m; const ev=evaluate(sq);
+      const p={odds:ev.odds,gain:0,sq:sq.map(s=>s.m?[s.z,s.n,s.m]:[s.z,s.n]),bonus:ev.bonus,hw:ev.hw,hx:ev.hx};
+      playCutscene(p,[{z,m}],MKIND[m],true);
+    }catch(e){ rolling=false; msg.textContent='Could not reach the server.'; }
+  });
+}
 function previewCut(kind){
   if(busy) return;
+  if(window.__closeIdx) window.__closeIdx();
   if(kind==='rebirth'){ playRebirthCut(Math.min(RB_MAX,S.rebirths+1),true,null); return; }
   const sq=[];
   for(let i=0;i<6;i++) sq.push({z:pickZ(0),n:1+Math.floor(Math.random()*N),m:0});
@@ -2537,6 +2567,13 @@ function init(){
   $('rarClose').addEventListener('click',()=>setRar(false));
   rp.addEventListener('click',e=>{ if(e.target===rp) setRar(false); });
   document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&!rp.hidden) setRar(false); });
+  const ip=$('idxPanel'), ib=$('idxBtn'), setIdx=o=>{ ip.hidden=!o; ib.setAttribute('aria-expanded',String(o)); };
+  window.__closeIdx=()=>setIdx(false);
+  ib.addEventListener('click',()=>setIdx(ip.hidden));
+  $('idxClose').addEventListener('click',()=>setIdx(false));
+  ip.addEventListener('click',e=>{ if(e.target===ip) setIdx(false); });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&!ip.hidden) setIdx(false); });
+  initOwner();
   $('rollBtn').addEventListener('click',()=>doRoll(false));
   $('autoChk').addEventListener('change',e=>{S.autoOn=e.target.checked;schedule();save(); if(REMOTE()) PRAuth.call('auto',{on:S.autoOn}).catch(()=>{});});
   document.addEventListener('keydown',e=>{
