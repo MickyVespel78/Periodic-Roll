@@ -154,13 +154,25 @@
 </div>
 
 <div id="ownPanel" class="rar" hidden role="dialog" aria-modal="true" aria-labelledby="ownTitle">
-  <div class="rar-card" style="max-width:520px">
+  <div class="rar-card" style="max-width:640px">
     <div class="sec-head"><h2 id="ownTitle">Owner tools</h2><button type="button" class="gbtn" id="ownClose">Close</button></div>
-    <p class="info">Unlock any element with any mutation. It goes into your Index and element ledger and plays the cutscene. It does not change your EXP, rolls or leaderboard score.</p>
+    <p class="acct-msg" id="ownMsg" aria-live="polite"></p>
+
+    <h3 class="own-h">Custom roll</h3>
+    <p class="info">Choose all six tiles, with any element and any mutation. It counts as a real roll: EXP, Index, best roll and the cutscene.</p>
+    <div id="ownTiles" class="own-tiles"></div>
+    <button type="button" class="buy" id="ownRoll">Roll it</button>
+
+    <h3 class="own-h">Unlock one</h3>
+    <p class="info">Add an element with a mutation to your Index and ledger without a roll. No EXP.</p>
     <label class="own-l">Element<select id="ownEl"></select></label>
     <label class="own-l">Mutation<select id="ownMut"></select></label>
-    <p class="acct-msg" id="ownMsg" aria-live="polite"></p>
     <button type="button" class="buy" id="ownGo">Give</button>
+
+    <h3 class="own-h">Edit my stats</h3>
+    <p class="info">Only your own account. Leave a box empty to keep it.</p>
+    <div class="own-grid" id="ownStats"></div>
+    <button type="button" class="buy" id="ownSave">Save stats</button>
   </div>
 </div>
 

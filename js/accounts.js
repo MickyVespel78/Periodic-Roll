@@ -111,10 +111,10 @@ function modal(view){
       go.disabled=true; msg.textContent='Working…';
       try{
         if(up){
-          const t=await A.client.from('profiles').select('id').ilike('username',name).limit(1);
-          if(t.data&&t.data.length){msg.textContent='That username is taken.';go.disabled=false;return;}
+          const t=await A.client.rpc('username_available',{name});
+          if(t.data===false){msg.textContent='That username is taken or not allowed.';go.disabled=false;return;}
           const r=await A.client.auth.signUp({email,password:pass,options:{data:{username:name}}});
-          if(r.error){msg.textContent=r.error.message;go.disabled=false;return;}
+          if(r.error){msg.textContent=/database error|taken/i.test(r.error.message)?'That username is taken or not allowed.':r.error.message;go.disabled=false;return;}
           if(!r.data.session){
             const r2=await A.client.auth.signInWithPassword({email,password:pass});
             if(r2.error){msg.textContent='Account created. Check your email to confirm it, then log in.';go.disabled=false;return;}

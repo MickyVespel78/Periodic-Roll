@@ -2475,31 +2475,49 @@ function closeCut(){
 }
 /* owner tools: the server checks the owners list, the page only asks */
 const MKIND={1:'planetary',2:'star',3:'impact',4:'system',5:'blackhole',6:'beyond',7:'multiverse',8:'omniverse',9:'absolute',10:'one',11:'universe',12:'determination',13:'secret'};
+const renameRift=o=>JSON.parse(JSON.stringify(o).replace(/Beyond Space/g,'Rift').replace(/BEYOND SPACE/g,'RIFT'));
 function initOwner(){
   const A=window.PRAuth; if(!A||!A.owner) return;
-  const btn=$('ownBtn'), pn=$('ownPanel'), el=$('ownEl'), mu=$('ownMut'), msg=$('ownMsg');
+  const btn=$('ownBtn'), pn=$('ownPanel'), msg=$('ownMsg');
   btn.hidden=false;
-  for(let z=1;z<=N;z++){ const o=document.createElement('option'); o.value=z; o.textContent=z+'  '+SYM[z-1]+'  '+NAME[z-1]; el.appendChild(o); }
-  for(let m=1;m<=13;m++){ const o=document.createElement('option'); o.value=m; o.textContent=MUTN[m]; mu.appendChild(o); }
+  const elOpts=()=>{ let h=''; for(let z=1;z<=N;z++) h+='<option value="'+z+'">'+z+'  '+SYM[z-1]+'  '+NAME[z-1]+'</option>'; return h; };
+  const muOpts=none=>{ let h=none?'<option value="0">No mutation</option>':''; for(let m=1;m<=13;m++) h+='<option value="'+m+'">'+MUTN[m]+'</option>'; return h; };
+  $('ownEl').innerHTML=elOpts(); $('ownMut').innerHTML=muOpts(false);
+  const tiles=$('ownTiles'); tiles.innerHTML='';
+  for(let i=0;i<6;i++){ const d=document.createElement('div'); d.className='own-tile';
+    d.innerHTML='<select class="te" aria-label="Tile '+(i+1)+' element">'+elOpts()+'</select><select class="tm" aria-label="Tile '+(i+1)+' mutation">'+muOpts(true)+'</select>'; tiles.appendChild(d); }
+  const FIELDS=[['exp','EXP'],['life','Lifetime EXP'],['rolls','Rolls'],['rebirths','Rebirths (0 to 10)'],['luck','Lucky isotopes (0 to 20)'],['speed','Quick hands (0 to 10)'],['auto','Auto-roller (0 or 1)']];
+  const st=$('ownStats'); st.innerHTML=FIELDS.map(f=>'<label class="own-l">'+f[1]+'<input data-f="'+f[0]+'" type="number" min="0" step="any" inputmode="decimal"></label>').join('');
   const set=o=>{ pn.hidden=!o; msg.textContent=''; };
   btn.addEventListener('click',()=>set(pn.hidden));
   $('ownClose').addEventListener('click',()=>set(false));
   pn.addEventListener('click',e=>{ if(e.target===pn) set(false); });
-  $('ownGo').addEventListener('click',async()=>{
-    if(rolling||busy) return;
-    const z=+el.value, m=+mu.value; rolling=true; msg.textContent='Working…';
-    try{
-      const r=await A.client.functions.invoke('admin',{body:{action:'give',z,m}});
-      if(r.error||!r.data||r.data.error){ let t='Could not do that.'; try{ const j=await r.error.context.json(); t=j.error||t; }catch(e){ if(r.data&&r.data.error) t=r.data.error; } msg.textContent=t; rolling=false; return; }
-      applyRemote(r.data); rolling=false; msg.textContent='';
-      paintAll(); renderWallet(); renderLists(); renderDisc(); updateUps(); renderRebirth();
-      set(false);
-      const sq=[]; for(let i=0;i<6;i++) sq.push({z:pickZ(0),n:1+Math.floor(Math.random()*N),m:0});
-      sq[0].z=z; sq[0].m=m; const ev=evaluate(sq);
-      const p={odds:ev.odds,gain:0,sq:sq.map(s=>s.m?[s.z,s.n,s.m]:[s.z,s.n]),bonus:ev.bonus,hw:ev.hw,hx:ev.hx};
-      playCutscene(p,[{z,m}],MKIND[m],true);
-    }catch(e){ rolling=false; msg.textContent='Could not reach the server.'; }
-  });
+  const call=async(body)=>{
+    const r=await A.client.functions.invoke('admin',{body});
+    if(r.error||!r.data||r.data.error){ let t='Could not do that.'; try{ const j=await r.error.context.json(); t=j.error||t; }catch(e){ if(r.data&&r.data.error) t=r.data.error; } throw new Error(t); }
+    return r.data;
+  };
+  const repaint=()=>{ paintAll(); renderWallet(); renderLists(); renderDisc(); updateUps(); syncAuto(); renderRebirth(); schedule(); };
+  const run=async(fn)=>{ if(rolling||busy){ msg.textContent='Wait for the current roll or cutscene to finish.'; return; } rolling=true; msg.textContent='Working…'; clearTimeout(timer);
+    try{ await fn(); rolling=false; }catch(e){ rolling=false; msg.textContent=e.message||'Could not reach the server.'; schedule(); } };
+  $('ownGo').addEventListener('click',()=>run(async()=>{
+    const z=+$('ownEl').value, m=+$('ownMut').value;
+    const d=await call({action:'give',z,m}); applyRemote(d); repaint(); set(false);
+    const sq=[]; for(let i=0;i<6;i++) sq.push({z:pickZ(0),n:1+Math.floor(Math.random()*N),m:0});
+    sq[0].z=z; sq[0].m=m; const ev=evaluate(sq);
+    const p={odds:ev.odds,gain:0,sq:sq.map(s=>s.m?[s.z,s.n,s.m]:[s.z,s.n]),bonus:ev.bonus,hw:ev.hw,hx:ev.hx};
+    playCutscene(p,[{z,m}],MKIND[m],true);
+  }));
+  $('ownRoll').addEventListener('click',()=>run(async()=>{
+    const rows=[...tiles.querySelectorAll('.own-tile')].map(d=>({z:+d.querySelector('.te').value,m:+d.querySelector('.tm').value}));
+    const d=await call({action:'forceroll',tiles:rows}); set(false);
+    applyRemote(d); present(renameRift(d.p),renameRift(d.notes||[]),d.outs||[],false,false);
+  }));
+  $('ownSave').addEventListener('click',()=>run(async()=>{
+    const values={}; st.querySelectorAll('input').forEach(i=>{ if(i.value!=='') values[i.dataset.f]=Number(i.value); });
+    if(!Object.keys(values).length){ msg.textContent='Type a value first.'; return; }
+    const d=await call({action:'set',values}); applyRemote(d); repaint(); st.querySelectorAll('input').forEach(i=>{i.value='';}); msg.textContent='Saved.';
+  }));
 }
 function previewCut(kind){
   if(busy) return;
