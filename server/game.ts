@@ -51,7 +51,16 @@ Deno.serve(async (req) => {
       if (now - t < MIN_GAP) return j({ error: "slow" }, 429);
       t = now;
       G.setMods(1 + MS_MUT * msCount(S), G.detChance(S.rebirths));
-      const r = G.rollOnce(effL(S, bu, now));
+      // A roll the owner queued for this player is used first, even if they were offline when it was sent.
+      let gift: any[] | null = null;
+      const { data: pg } = await admin.from("pending_rolls").select("id,tiles").eq("user_id", uid).order("id").limit(1).maybeSingle();
+      if (pg) {
+        const { data: del } = await admin.from("pending_rolls").delete().eq("id", pg.id).select("id");
+        if (del && del.length) gift = pg.tiles;
+      }
+      let r: any;
+      if (gift) { const gsq = gift.map((s: any) => ({ z: s.z, n: s.n, m: s.m || 0 })); r = { sq: gsq, ...G.evaluate(gsq) }; }
+      else r = G.rollOnce(effL(S, bu, now));
       const gain = Math.max(1, Math.round(Math.pow(r.odds, 0.7) * expMult(S)));
       const p = { odds: r.odds, gain, sq: r.sq.map((s: any) => s.m ? [s.z, s.n, s.m] : [s.z, s.n]), bonus: r.bonus, hw: r.hw, hx: r.hx };
       S.exp += gain; S.life += gain; S.rolls++; S.tot = (S.tot || 0) + 1;
@@ -68,6 +77,7 @@ Deno.serve(async (req) => {
       for (const n of r.rx) { if (!S.rx[n]) notes.push(n); S.rx[n] = (S.rx[n] || 0) + 1; }
       const rec = !!(S.best && p.odds > S.best.odds && p.odds >= REC_MIN);
       if (rec) { notes.unshift("NEW RECORD"); pb = true; }
+      if (gift) notes.unshift("GIFT ROLL FROM THE OWNER");
       if (!S.best || p.odds > S.best.odds) S.best = p;
       S.top.push(p); S.top.sort((a: any, b: any) => b.odds - a.odds); S.top = S.top.slice(0, 5);
       S.recent.unshift(p); S.recent = S.recent.slice(0, 6);

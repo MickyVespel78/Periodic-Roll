@@ -158,8 +158,14 @@
     <div class="sec-head"><h2 id="ownTitle">Owner tools</h2><button type="button" class="gbtn" id="ownClose">Close</button></div>
     <p class="acct-msg" id="ownMsg" aria-live="polite"></p>
 
-    <h3 class="own-h">Custom roll</h3>
-    <p class="info">Choose all six tiles, with any element and any mutation. It counts as a real roll: EXP, Index, best roll and the cutscene.</p>
+    <h3 class="own-h">Who are you editing?</h3>
+    <p class="info">Type a username to edit that player, or press Me. Every name you enter is saved below so you can tap it next time.</p>
+    <div class="own-who"><input id="ownTarget" type="text" maxlength="32" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Username (empty = me)" aria-label="Player username"><button type="button" class="gbtn" id="ownUse">Use</button><button type="button" class="gbtn" id="ownMe">Me</button></div>
+    <div id="ownList" class="own-chips" aria-label="Saved players"></div>
+    <p class="own-now" id="ownNow">Editing: you</p>
+
+    <h3 class="own-h" id="ownRollH">Custom roll</h3>
+    <p class="info" id="ownRollInfo">Choose all six tiles, with any element and any mutation. It counts as a real roll: EXP, Index, best roll and the cutscene.</p>
     <div id="ownTiles" class="own-tiles"></div>
     <button type="button" class="buy" id="ownRoll">Roll it</button>
 
@@ -169,8 +175,8 @@
     <label class="own-l">Mutation<select id="ownMut"></select></label>
     <button type="button" class="buy" id="ownGo">Give</button>
 
-    <h3 class="own-h">Edit my stats</h3>
-    <p class="info">Only your own account. Leave a box empty to keep it.</p>
+    <h3 class="own-h">Edit stats</h3>
+    <p class="info" id="ownStatInfo">Leave a box empty to keep it. Your own limits are far higher than a normal player can ever reach.</p>
     <div class="own-grid" id="ownStats"></div>
     <button type="button" class="buy" id="ownSave">Save stats</button>
   </div>

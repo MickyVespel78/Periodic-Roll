@@ -672,3 +672,12 @@ body.perf :not(.cut):not(.cut *),body.perf :not(.cut):not(.cut *)::before,body.p
 .own-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 10px;margin-bottom:6px}
 .own-grid .own-l{margin:6px 0}
 @media (max-width:520px){.own-tiles,.own-grid{grid-template-columns:minmax(0,1fr)}}
+
+.own-who{display:flex;gap:8px;margin:8px 0}
+.own-who input{flex:1;min-width:0;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--raise);color:var(--ink);font:500 15px var(--f-mono)}
+.own-chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.own-chip{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px;background:var(--raise);color:var(--ink);font:500 13px var(--f-mono);overflow:hidden}
+.own-chip button{all:unset;cursor:pointer;padding:6px 10px}
+.own-chip button.x{color:var(--muted);padding:6px 9px 6px 2px}
+.own-chip.on{border-color:var(--ink);font-weight:700}
+.own-now{font:700 13px var(--f-mono);margin:8px 0 0}

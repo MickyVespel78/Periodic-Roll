@@ -235,5 +235,5 @@ function rollOnce(L){
   return {sq,odds:ev.odds,bonus:ev.bonus,hw:ev.hw,hx:ev.hx,word:ev.word,rx:ev.rx};
 }
 
-export {rollOnce,detChance,NAME,MUTN,N};
+export {rollOnce,detChance,evaluate,NAME,MUTN,N};
 export function setMods(a,b){mutBoost=a;detP=b;}

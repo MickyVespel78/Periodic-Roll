@@ -659,7 +659,7 @@ function cleanRow(id,d){
     const ok=d.bestSq.every(s=>Array.isArray(s)&&(s.length===2||s.length===3)&&Number.isInteger(s[0])&&Number.isInteger(s[1])&&s[0]>=1&&s[0]<=N&&s[1]>=1&&s[1]<=N);
     if(ok) sq=d.bestSq.map(s=>[s[0],s[1],(s[2]>=1&&s[2]<=13)?s[2]:0]);
   }
-  return {owner:!!d.owner,name:typeof d.name==='string'?d.name.slice(0,16):'',id:String(id),life:num(d.life),bestOdds:num(d.bestOdds),level:Math.floor(num(d.level)),rolls:Math.floor(num(d.rolls)),found:Math.floor(num(d.found)),rebirths:Math.min(RB_MAX,Math.floor(num(d.rebirths))),sq:sq};
+  return {owner:!!d.owner,name:typeof d.name==='string'?d.name.slice(0,16):'',id:String(id),life:num(d.life),bestOdds:num(d.bestOdds),level:Math.floor(num(d.level)),rolls:Math.floor(num(d.rolls)),found:Math.floor(num(d.found)),rebirths:Math.min(1000,Math.floor(num(d.rebirths))),sq:sq};
 }
 function setNote(){
   const n=$('lbNote');
@@ -2486,23 +2486,46 @@ function initOwner(){
   const tiles=$('ownTiles'); tiles.innerHTML='';
   for(let i=0;i<6;i++){ const d=document.createElement('div'); d.className='own-tile';
     d.innerHTML='<select class="te" aria-label="Tile '+(i+1)+' element">'+elOpts()+'</select><select class="tm" aria-label="Tile '+(i+1)+' mutation">'+muOpts(true)+'</select>'; tiles.appendChild(d); }
-  const FIELDS=[['exp','EXP'],['life','Lifetime EXP'],['rolls','Rolls'],['rebirths','Rebirths (0 to 10)'],['luck','Lucky isotopes (0 to 20)'],['speed','Quick hands (0 to 10)'],['auto','Auto-roller (0 or 1)']];
+  const FIELDS=[['exp','EXP'],['life','Lifetime EXP'],['rolls','Rolls'],['rebirths','Rebirths (0 to 1000)'],['luck','Lucky isotopes (0 to 1000)'],['speed','Quick hands (0 to 1000)'],['auto','Auto-roller (0 or 1)']];
   const st=$('ownStats'); st.innerHTML=FIELDS.map(f=>'<label class="own-l">'+f[1]+'<input data-f="'+f[0]+'" type="number" min="0" step="any" inputmode="decimal"></label>').join('');
   const set=o=>{ pn.hidden=!o; msg.textContent=''; };
   btn.addEventListener('click',()=>set(pn.hidden));
   $('ownClose').addEventListener('click',()=>set(false));
   pn.addEventListener('click',e=>{ if(e.target===pn) set(false); });
+  let target='';
   const call=async(body)=>{
-    const r=await A.client.functions.invoke('admin',{body});
+    const r=await A.client.functions.invoke('admin',{body:Object.assign({target},body)});
     if(r.error||!r.data||r.data.error){ let t='Could not do that.'; try{ const j=await r.error.context.json(); t=j.error||t; }catch(e){ if(r.data&&r.data.error) t=r.data.error; } throw new Error(t); }
     return r.data;
   };
   const repaint=()=>{ paintAll(); renderWallet(); renderLists(); renderDisc(); updateUps(); syncAuto(); renderRebirth(); schedule(); };
   const run=async(fn)=>{ if(rolling||busy){ msg.textContent='Wait for the current roll or cutscene to finish.'; return; } rolling=true; msg.textContent='Working…'; clearTimeout(timer);
     try{ await fn(); rolling=false; }catch(e){ rolling=false; msg.textContent=e.message||'Could not reach the server.'; schedule(); } };
+  const fmtStat=v=>(typeof v==='number'?(v>=1e6?v.toExponential(3):String(Math.round(v*100)/100)):'');
+  const showStats=(s,name)=>{ if(!s) return; $('ownNow').textContent='Editing: '+name+' · EXP '+fmtStat(s.exp)+' · rolls '+fmtStat(s.rolls)+' · rebirths '+s.rebirths+' · luck '+s.luck+(s.pending?' · '+s.pending+' gift roll'+(s.pending>1?'s':'')+' waiting':''); };
+  const labels=()=>{ const o=!!target; $('ownRoll').textContent=o?'Send as gift roll':'Roll it'; $('ownRollH').textContent=o?'Gift roll':'Custom roll';
+    $('ownRollInfo').textContent=o?'Choose all six tiles. It waits for the player, even offline. Their very next roll is this one, with a note that it is a gift. Nothing is shown to them before then.':'Choose all six tiles, with any element and any mutation. It counts as a real roll: EXP, Index, best roll and the cutscene.';
+    $('ownGo').textContent=o?'Give to player':'Give'; $('ownSave').textContent=o?'Save their stats':'Save stats'; };
+  const lookup=async()=>{ try{ const d=await call({action:'lookup'}); showStats(d.stats,d.me?'you':d.target); }catch(e){ msg.textContent=e.message; } };
+  const chips=$('ownList');
+  const paintChips=names=>{ chips.innerHTML=''; (names||[]).forEach(n=>{ const c=document.createElement('span'); c.className='own-chip'+(n.toLowerCase()===target.toLowerCase()?' on':'');
+    const b=document.createElement('button'); b.type='button'; b.textContent=n; b.addEventListener('click',()=>choose(n));
+    const x=document.createElement('button'); x.type='button'; x.className='x'; x.textContent='×'; x.title='Remove from list'; x.setAttribute('aria-label','Remove '+n+' from the list');
+    x.addEventListener('click',async()=>{ try{ await A.client.functions.invoke('admin',{body:{action:'forget',target:n}}); if(n.toLowerCase()===target.toLowerCase()) choose(''); loadList(); }catch(e){} });
+    c.appendChild(b); c.appendChild(x); chips.appendChild(c); }); };
+  const loadList=async()=>{ try{ const d=await call.call(null,{action:'targets'}); paintChips(d.targets); }catch(e){} };
+  const choose=async n=>{ target=String(n||'').trim(); $('ownTarget').value=target; msg.textContent=''; labels();
+    if(!target){ $('ownNow').textContent='Editing: you'; await lookup(); loadList(); return; }
+    $('ownNow').textContent='Looking up '+target+'…'; await lookup(); loadList(); };
+  $('ownUse').addEventListener('click',()=>choose($('ownTarget').value));
+  $('ownTarget').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); choose($('ownTarget').value); } });
+  $('ownMe').addEventListener('click',()=>choose(''));
+  btn.addEventListener('click',()=>{ if(!pn.hidden){ loadList(); lookup(); } });
   $('ownGo').addEventListener('click',()=>run(async()=>{
     const z=+$('ownEl').value, m=+$('ownMut').value;
-    const d=await call({action:'give',z,m}); applyRemote(d); repaint(); set(false);
+    const d=await call({action:'give',z,m});
+    if(target){ showStats(d.stats,d.target); msg.textContent='Gave '+MUTN[m]+' '+NAME[z-1]+' to '+d.target+'. It is in their Index now.'; return; }
+    applyRemote(d); repaint(); set(false);
     const sq=[]; for(let i=0;i<6;i++) sq.push({z:pickZ(0),n:1+Math.floor(Math.random()*N),m:0});
     sq[0].z=z; sq[0].m=m; const ev=evaluate(sq);
     const p={odds:ev.odds,gain:0,sq:sq.map(s=>s.m?[s.z,s.n,s.m]:[s.z,s.n]),bonus:ev.bonus,hw:ev.hw,hx:ev.hx};
@@ -2510,14 +2533,19 @@ function initOwner(){
   }));
   $('ownRoll').addEventListener('click',()=>run(async()=>{
     const rows=[...tiles.querySelectorAll('.own-tile')].map(d=>({z:+d.querySelector('.te').value,m:+d.querySelector('.tm').value}));
-    const d=await call({action:'forceroll',tiles:rows}); set(false);
-    applyRemote(d); present(renameRift(d.p),renameRift(d.notes||[]),d.outs||[],false,false);
+    const d=await call({action:'forceroll',tiles:rows});
+    if(target){ msg.textContent='Gift roll queued for '+d.target+' ('+d.pending+' waiting). They get it on their next roll.'; lookup(); return; }
+    set(false); applyRemote(d); present(renameRift(d.p),renameRift(d.notes||[]),d.outs||[],false,false);
   }));
   $('ownSave').addEventListener('click',()=>run(async()=>{
     const values={}; st.querySelectorAll('input').forEach(i=>{ if(i.value!=='') values[i.dataset.f]=Number(i.value); });
     if(!Object.keys(values).length){ msg.textContent='Type a value first.'; return; }
-    const d=await call({action:'set',values}); applyRemote(d); repaint(); st.querySelectorAll('input').forEach(i=>{i.value='';}); msg.textContent='Saved.';
+    const d=await call({action:'set',values});
+    st.querySelectorAll('input').forEach(i=>{i.value='';});
+    if(target){ showStats(d.stats,d.target); msg.textContent='Saved for '+d.target+'. They see it on their next roll or when they reload.'; return; }
+    applyRemote(d); repaint(); showStats(d.stats,'you'); msg.textContent='Saved.';
   }));
+  loadList(); lookup();
 }
 function previewCut(kind){
   if(busy) return;
@@ -2536,7 +2564,7 @@ function previewCut(kind){
 let rbArmed=false, rbT=null;
 function renderRebirth(){
   const r=S.rebirths, max=r>=RB_MAX, cost=max?0:rbCost(r), b=$('rbBtn');
-  $('rbCount').textContent=r+' / '+RB_MAX;
+  $('rbCount').textContent=r>RB_MAX?String(r):r+' / '+RB_MAX;
   $('rbLuck').textContent='+'+(0.5*r).toFixed(1);
   $('rbExp').textContent='×'+expMult().toFixed(1);
   $('rbCost').textContent=max?'Maxed':(fmt(cost)+' EXP');
