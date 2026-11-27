@@ -16,8 +16,8 @@ const DEFS: Record<string, { max: number; cost: (l: number) => number }> = {
   speed: { max: 10, cost: (l) => Math.round(40000 * Math.pow(2, l)) },
   luck: { max: 20, cost: (l) => Math.round(150 * Math.pow(1.9, l)) },
 };
-const fresh = (): any => ({ exp: 0, life: 0, rolls: 0, tot: 0, up: { auto: 0, speed: 0, luck: 0 }, autoOn: false, found: {}, words: {}, rx: {}, best: null, top: [], recent: [], last: null, rebirths: 0, dets: {}, secs: {}, outers: {}, stars: {}, impacts: {}, systems: {}, holes: {}, beyonds: {}, multis: {}, unis: {}, omnis: {}, absolutes: {}, ones: {} });
-const KEEP = ["rolls", "found", "words", "rx", "top", "recent", "secs", "dets", "tot", "life", "best", "outers", "stars", "impacts", "systems", "holes", "beyonds", "multis", "unis", "omnis", "absolutes", "ones"];
+const fresh = (): any => ({ exp: 0, life: 0, rolls: 0, tot: 0, up: { auto: 0, speed: 0, luck: 0 }, autoOn: false, found: {}, words: {}, rx: {}, best: null, top: [], recent: [], last: null, rebirths: 0, shards: 0, ach: {}, qs: {}, dets: {}, secs: {}, outers: {}, stars: {}, impacts: {}, systems: {}, holes: {}, beyonds: {}, multis: {}, unis: {}, omnis: {}, absolutes: {}, ones: {} });
+const KEEP = ["shards", "ach", "qs", "rolls", "found", "words", "rx", "top", "recent", "secs", "dets", "tot", "life", "best", "outers", "stars", "impacts", "systems", "holes", "beyonds", "multis", "unis", "omnis", "absolutes", "ones"];
 function merge(S: any, d: any) {
   if (!d || typeof d !== "object") return;
   for (const k of Object.keys(S)) {
@@ -30,6 +30,61 @@ const msCount = (S: any) => MS.filter((t) => (S.tot || 0) >= t).length;
 const expMult = (S: any) => 1 + 0.5 * S.rebirths;
 const effL = (S: any, bu: number, now: number) => S.up.luck + 0.5 * S.rebirths + MS_LUCK * msCount(S) + (now < bu ? BOOST_LUCK : 0);
 const mutMap = (S: any, m: number) => m === 1 ? S.outers : m === 2 ? S.stars : m === 3 ? S.impacts : m === 4 ? S.systems : m === 5 ? S.holes : m === 6 ? S.beyonds : m === 7 ? S.multis : m === 11 ? S.unis : m === 12 ? S.dets : m === 13 ? S.secs : m === 8 ? S.omnis : m === 9 ? S.absolutes : S.ones;
+
+// ---- Achievements (pay shards, unlock by themselves) and quests (pay EXP, press Claim) ----
+// metric keys: tot found words rx rb mutk mutn best level det sec luck auto
+const ACH: [string, string, string, string, number, number][] = [
+  ["r1", "First roll", "Roll once", "tot", 1, 15], ["r100", "Warming up", "Roll 100 times", "tot", 100, 15], ["r1k", "Getting hooked", "Roll 1,000 times", "tot", 1000, 20],
+  ["r10k", "Dedicated", "Roll 10,000 times", "tot", 10000, 30], ["r100k", "No life", "Roll 100,000 times", "tot", 100000, 50],
+  ["e20", "Collector", "Find 20 elements", "found", 20, 15], ["e60", "Chemist", "Find 60 elements", "found", 60, 25], ["e118", "Whole table", "Find all 118 elements", "found", 118, 50],
+  ["w10", "Wordsmith", "Find 10 different words or names", "words", 10, 15], ["w50", "Dictionary", "Find 50 different words or names", "words", 50, 25],
+  ["x10", "Lab work", "Form 10 different compounds", "rx", 10, 15], ["x40", "Master chemist", "Form 40 different compounds", "rx", 40, 25],
+  ["m1", "Something changed", "Get your first mutation", "mutk", 1, 20], ["m5", "Mutant", "Find 5 different mutations", "mutk", 5, 30], ["m9", "Cosmic", "Find 9 different mutations", "mutk", 9, 45],
+  ["rb1", "Born again", "Rebirth once", "rb", 1, 25], ["rb5", "Reborn", "Reach 5 rebirths", "rb", 5, 35], ["rb10", "Fully reborn", "Reach 10 rebirths", "rb", 10, 50],
+  ["det", "Stay determined", "Find a Determination", "det", 1, 40], ["sec", "It was you", "Find the ???", "sec", 1, 50],
+  ["b1k", "Lucky", "Best roll of 1 in 1,000", "best", 1e3, 15], ["b1m", "Very lucky", "Best roll of 1 in 1,000,000", "best", 1e6, 25], ["b1t", "Absurdly lucky", "Best roll of 1 in 1e12", "best", 1e12, 35], ["b30", "Impossible", "Best roll of 1 in 1e30", "best", 1e30, 50],
+  ["l10", "Level 10", "Reach level 10", "level", 10, 15], ["l30", "Level 30", "Reach level 30", "level", 30, 30],
+  ["auto", "Hands free", "Own the Auto-roller", "auto", 1, 20], ["lk20", "Max luck", "Lucky isotopes level 20", "luck", 20, 30],
+];
+const QD: Record<string, [string, string, string, number][]> = {
+  d: [["d_n", "Roll 150 times", "n", 150], ["d_x", "Form 30 compounds", "rx", 30], ["d_w", "Find 6 words or names", "wd", 6], ["d_o", "Land 20 rolls of 1 in 5,000 or rarer", "o5k", 20]],
+  w: [["w_n", "Roll 1,500 times", "n", 1500], ["w_x", "Form 300 compounds", "rx", 300], ["w_o", "Land 100 rolls of 1 in 100,000 or rarer", "o1e5", 100], ["w_m", "Get a mutation", "mut", 1]],
+  a: [["a_t1", "Roll 5,000 times", "tot", 5000], ["a_t2", "Roll 50,000 times", "tot", 50000], ["a_t3", "Roll 500,000 times", "tot", 500000], ["a_e", "Find 100 elements", "found", 100], ["a_w", "Find 40 different words or names", "words", 40],
+      ["a_k", "Find 4 different mutations", "mutk", 4], ["a_r1", "Rebirth once", "rb", 1], ["a_r5", "Reach 5 rebirths", "rb", 5], ["a_b", "Best roll of 1 in 1e15", "best", 1e15]],
+};
+const MKEYS = ["outers", "stars", "impacts", "systems", "holes", "beyonds", "multis", "unis", "omnis", "absolutes", "ones", "dets", "secs"];
+const cnt = (o: any) => Object.keys(o || {}).length;
+const metric = (k: string, S: any): number => {
+  switch (k) {
+    case "tot": return S.tot || 0; case "found": return cnt(S.found); case "words": return cnt(S.words); case "rx": return cnt(S.rx); case "rb": return S.rebirths || 0;
+    case "mutk": return MKEYS.filter((m) => cnt(S[m]) > 0).length; case "best": return S.best ? S.best.odds : 0; case "level": return levelOf(S.life || 0);
+    case "det": return cnt(S.dets) > 0 ? 1 : 0; case "sec": return cnt(S.secs) > 0 ? 1 : 0; case "luck": return S.up.luck || 0; case "auto": return S.up.auto || 0;
+  }
+  return 0;
+};
+const dayId = (now: number) => Math.floor(now / 864e5), weekId = (now: number) => Math.floor((now / 864e5 + 3) / 7);
+function syncQ(S: any, now: number) {
+  if (!S.qs || typeof S.qs !== "object") S.qs = {};
+  if (!S.ach || typeof S.ach !== "object") S.ach = {};
+  if (!S.qs.d || S.qs.d.id !== dayId(now)) S.qs.d = { id: dayId(now), p: {}, c: {} };
+  if (!S.qs.w || S.qs.w.id !== weekId(now)) S.qs.w = { id: weekId(now), p: {}, c: {} };
+  if (!S.qs.a) S.qs.a = { p: {}, c: {} };
+  if (typeof S.shards !== "number") S.shards = 0;
+}
+function bump(S: any, ev: Record<string, number>) { for (const sc of ["d", "w"]) for (const k in ev) S.qs[sc].p[k] = (S.qs[sc].p[k] || 0) + ev[k]; }
+function checkAch(S: any, now: number) {
+  const got: any[] = [];
+  for (const [id, name, , key, goal, sh] of ACH) if (!S.ach[id] && metric(key, S) >= goal) { S.ach[id] = now; S.shards += sh; got.push({ name, shards: sh }); }
+  return got;
+}
+const reward = (sc: string, S: any) => sc === "d" ? Math.max(500, Math.round(0.03 * (S.life || 0))) : sc === "w" ? Math.max(5000, Math.round(0.15 * (S.life || 0))) : Math.max(20000, Math.round(0.5 * (S.life || 0)));
+const qprog = (sc: string, key: string, S: any) => sc === "a" ? metric(key, S) : (S.qs[sc].p[key] || 0);
+function view(S: any, now: number) {
+  const q: any = {};
+  for (const sc of ["d", "w", "a"]) q[sc] = QD[sc].map(([id, title, key, goal]) => { const pr = qprog(sc, key, S); return { id, title, prog: Math.min(pr, goal), goal, done: pr >= goal, claimed: !!S.qs[sc].c[id], reward: reward(sc, S) }; });
+  const ach = ACH.map(([id, name, desc, key, goal, sh]) => ({ id, name, desc, prog: Math.min(metric(key, S), goal), goal, shards: sh, done: !!S.ach[id] }));
+  return { shards: S.shards, q, ach, resetD: (dayId(now) + 1) * 864e5 - now, resetW: (weekId(now) * 7 - 3 + 7) * 864e5 - now };
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
@@ -45,6 +100,7 @@ Deno.serve(async (req) => {
     const S = fresh(); let t = 0, bu = 0, pb = false;
     if (row?.data) { merge(S, row.data); t = +row.data._t || 0; bu = +row.data._bu || 0; pb = !!row.data._pb; }
     const now = Date.now(); const out: any = {}; let dirty = true;
+    syncQ(S, now);
 
     if (act === "state") { dirty = !row; }
     else if (act === "roll") {
@@ -83,6 +139,7 @@ Deno.serve(async (req) => {
       S.recent.unshift(p); S.recent = S.recent.slice(0, 6);
       S.last = p;
       if (typeof body.autoOn === "boolean" && S.up.auto > 0) S.autoOn = body.autoOn;
+      bump(S, { n: 1, rx: r.rx.length, wd: r.word ? 1 : 0, o5k: p.odds >= 5000 ? 1 : 0, o1e5: p.odds >= 1e5 ? 1 : 0, mut: outs.length });
       Object.assign(out, { p, notes, outs, rec });
     }
     else if (act === "boost") { if (pb) { pb = false; bu = now + BOOST_MS; } }
@@ -102,9 +159,19 @@ Deno.serve(async (req) => {
       S.rebirths = r + 1; bu = 0; pb = false;
       if (S.rebirths >= 3) { S.up.auto = 1; S.autoOn = true; }
     }
-    else if (act === "reset") { Object.assign(S, fresh()); bu = 0; pb = false; }
+    else if (act === "claim") {
+      const id = String(body.q || ""); const sc = id.charAt(0);
+      const def = (QD[sc] || []).find((d) => d[0] === id);
+      if (!def) return j({ error: "No such quest." }, 400);
+      if (S.qs[sc].c[id]) return j({ error: "Already claimed." }, 400);
+      if (qprog(sc, def[2], S) < def[3]) return j({ error: "Not finished yet." }, 400);
+      const rw = reward(sc, S); S.qs[sc].c[id] = 1; S.exp += rw; S.life += rw; out.claimed = rw;
+    }
+    else if (act === "reset") { const k = { shards: S.shards, ach: S.ach, qs: S.qs }; Object.assign(S, fresh(), k); bu = 0; pb = false; }
     else return j({ error: "unknown action" }, 400);
 
+    out.newAch = checkAch(S, now);
+    if (out.newAch.length) dirty = true;
     if (dirty) {
       const best = S.best;
       const { error: we } = await admin.from("saves").upsert({
@@ -115,7 +182,7 @@ Deno.serve(async (req) => {
       });
       if (we) return j({ error: "Could not save: " + we.message }, 500);
     }
-    return j({ S, bl: Math.max(0, bu - now), ...out });
+    return j({ S, bl: Math.max(0, bu - now), Q: view(S, now), ...out });
   } catch (e) {
     return j({ error: String((e as Error)?.message || e) }, 500);
   }

@@ -314,6 +314,45 @@ const REMOTE=()=>!!(window.PRAuth&&PRAuth.enabled&&PRAuth.user&&PRAuth.mode==='a
 function applyRemote(res){
   const keepSq=null; Object.assign(S,fresh()); merge(res.S);
   if(res.bl>0) boostUntil=Date.now()+res.bl;
+  if(res.Q){ Q=res.Q; try{ renderShards(); renderQuests(); }catch(e){} }
+  else if(res.stats&&typeof res.stats.shards==='number'&&Q){ Q.shards=res.stats.shards; try{ renderShards(); }catch(e){} }
+  if(res.newAch&&res.newAch.length) res.newAch.forEach((a,i)=>setTimeout(()=>toastQ('Achievement: '+a.name+'  +'+a.shards+' shards'),i*2600));
+}
+/* quests, achievements, shards: all numbers come from the server */
+let Q=null, qTab='d';
+function toastQ(t){ const d=document.createElement('div'); d.className='toastq'; d.setAttribute('role','status'); d.textContent=t; document.body.appendChild(d); setTimeout(()=>d.remove(),2600); }
+function renderShards(){ const b=$('shardBox'); if(!b) return; b.hidden=!(REMOTE()&&Q); if(Q) $('shards').textContent=fmt(Q.shards);
+  const dot=$('qDot'); if(dot&&Q){ dot.hidden=!['d','w','a'].some(s=>Q.q[s].some(x=>x.done&&!x.claimed)); } }
+const qTime=ms=>{ const m=Math.max(0,Math.floor(ms/6e4)), d=Math.floor(m/1440), h=Math.floor(m%1440/60); return d>0?d+'d '+h+'h':h+'h '+(m%60)+'m'; };
+function renderQuests(){
+  const box=$('qBody'); if(!box) return;
+  document.querySelectorAll('.q-tabs .gbtn').forEach(b=>b.classList.toggle('on',b.dataset.t===qTab));
+  if(!REMOTE()){ box.innerHTML='<p class="info">Log in to an account to get quests, achievements and shards. Guests do not have them.</p>'; return; }
+  if(!Q){ box.innerHTML='<p class="info">Loading…</p>'; return; }
+  let h='';
+  if(qTab==='ach'){
+    const n=Q.ach.filter(a=>a.done).length;
+    h+='<p class="q-time">'+n+' / '+Q.ach.length+' unlocked · '+fmt(Q.shards)+' shards</p>';
+    Q.ach.forEach(a=>{ h+='<div class="q-row'+(a.done?' done':'')+'"><div><b>'+a.name+'</b><small>'+a.desc+'</small></div><span class="info">+'+a.shards+' shards</span><progress max="1" value="'+(a.goal?Math.min(1,a.prog/a.goal):1)+'"></progress></div>'; });
+  } else {
+    h+='<p class="q-time">'+(qTab==='d'?'Resets in '+qTime(Q.resetD):qTab==='w'?'Resets in '+qTime(Q.resetW):'Never resets')+'</p>';
+    Q.q[qTab].forEach(x=>{ h+='<div class="q-row'+(x.done?' done':'')+'"><div><b>'+x.title+'</b><small>'+fmt(x.prog)+' / '+fmt(x.goal)+' · reward '+fmt(x.reward)+' EXP</small></div>'
+      +(x.claimed?'<span class="info">Claimed</span>':'<button type="button" class="buy" data-q="'+x.id+'"'+(x.done?'':' disabled')+'>Claim</button>')+'<progress max="1" value="'+Math.min(1,x.prog/x.goal)+'"></progress></div>'; });
+  }
+  box.innerHTML=h;
+}
+function initQuests(){
+  const pn=$('qPanel'), btn=$('qBtn'), msg=$('qMsg');
+  if(window.PRAuth&&PRAuth.Q&&!Q) Q=PRAuth.Q;
+  const set=o=>{ pn.hidden=!o; btn.setAttribute('aria-expanded',String(o)); msg.textContent=''; if(o){ if(REMOTE()&&!Q) PRAuth.call('state').then(r=>applyRemote(r)).catch(()=>{}); renderQuests(); } };
+  btn.addEventListener('click',()=>set(pn.hidden));
+  $('qClose').addEventListener('click',()=>set(false));
+  pn.addEventListener('click',e=>{ if(e.target===pn) set(false); });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&!pn.hidden) set(false); });
+  document.querySelectorAll('.q-tabs .gbtn').forEach(b=>b.addEventListener('click',()=>{ qTab=b.dataset.t; renderQuests(); }));
+  $('qBody').addEventListener('click',e=>{ const b=e.target.closest('button[data-q]'); if(!b||b.disabled) return; b.disabled=true;
+    PRAuth.call('claim',{q:b.dataset.q}).then(res=>{ applyRemote(res); renderWallet(); updateUps(); renderRebirth(); msg.textContent='Claimed +'+fmt(res.claimed||0)+' EXP.'; },e2=>{ msg.textContent=e2.message; renderQuests(); }); });
+  renderShards();
 }
 function netNote(msg){ const n=$('lbNote'); if(n&&msg) n.textContent=msg; }
 let saveT=null;
@@ -466,7 +505,7 @@ function renderResult(p,notes,pulse){
   if(pulse&&ti>=4){r.classList.remove('pulse');void r.offsetWidth;r.classList.add('pulse');}
 }
 function renderWallet(){
-  $('exp').textContent=fmt(S.exp);
+  $('exp').textContent=fmt(S.exp); try{ renderShards(); }catch(e){}
   $('lvl').textContent=String(levelOf(S.life));
   $('rolls').textContent=fmt(S.rolls);
   $('found').textContent=Object.keys(S.found).length+' / '+N;
@@ -659,7 +698,7 @@ function cleanRow(id,d){
     const ok=d.bestSq.every(s=>Array.isArray(s)&&(s.length===2||s.length===3)&&Number.isInteger(s[0])&&Number.isInteger(s[1])&&s[0]>=1&&s[0]<=N&&s[1]>=1&&s[1]<=N);
     if(ok) sq=d.bestSq.map(s=>[s[0],s[1],(s[2]>=1&&s[2]<=13)?s[2]:0]);
   }
-  return {owner:!!d.owner,name:typeof d.name==='string'?d.name.slice(0,16):'',id:String(id),life:num(d.life),bestOdds:num(d.bestOdds),level:Math.floor(num(d.level)),rolls:Math.floor(num(d.rolls)),found:Math.floor(num(d.found)),rebirths:Math.min(1000,Math.floor(num(d.rebirths))),sq:sq};
+  return {owner:!!d.owner,name:typeof d.name==='string'?d.name.slice(0,16):'',id:String(id),life:num(d.life),bestOdds:num(d.bestOdds),level:Math.floor(num(d.level)),rolls:Math.floor(num(d.rolls)),found:Math.floor(num(d.found)),rebirths:Math.min(2e9,Math.floor(num(d.rebirths))),sq:sq};
 }
 function setNote(){
   const n=$('lbNote');
@@ -2486,8 +2525,8 @@ function initOwner(){
   const tiles=$('ownTiles'); tiles.innerHTML='';
   for(let i=0;i<6;i++){ const d=document.createElement('div'); d.className='own-tile';
     d.innerHTML='<select class="te" aria-label="Tile '+(i+1)+' element">'+elOpts()+'</select><select class="tm" aria-label="Tile '+(i+1)+' mutation">'+muOpts(true)+'</select>'; tiles.appendChild(d); }
-  const FIELDS=[['exp','EXP'],['life','Lifetime EXP'],['rolls','Rolls'],['rebirths','Rebirths (0 to 1000)'],['luck','Lucky isotopes (0 to 1000)'],['speed','Quick hands (0 to 1000)'],['auto','Auto-roller (0 or 1)']];
-  const st=$('ownStats'); st.innerHTML=FIELDS.map(f=>'<label class="own-l">'+f[1]+'<input data-f="'+f[0]+'" type="number" min="0" step="any" inputmode="decimal"></label>').join('');
+  const FIELDS=[['exp','EXP'],['life','Lifetime EXP'],['rolls','Rolls'],['rebirths','Rebirths (number or inf)'],['luck','Lucky isotopes (number or inf)'],['speed','Quick hands (number or inf)'],['auto','Auto-roller (0 or 1)'],['shards','Shards']];
+  const st=$('ownStats'); st.innerHTML=FIELDS.map(f=>'<label class="own-l">'+f[1]+'<input data-f="'+f[0]+'" type="text" autocomplete="off" spellcheck="false" inputmode="decimal" placeholder="number or inf"></label>').join('');
   const set=o=>{ pn.hidden=!o; msg.textContent=''; };
   btn.addEventListener('click',()=>set(pn.hidden));
   $('ownClose').addEventListener('click',()=>set(false));
@@ -2502,7 +2541,7 @@ function initOwner(){
   const run=async(fn)=>{ if(rolling||busy){ msg.textContent='Wait for the current roll or cutscene to finish.'; return; } rolling=true; msg.textContent='Working…'; clearTimeout(timer);
     try{ await fn(); rolling=false; }catch(e){ rolling=false; msg.textContent=e.message||'Could not reach the server.'; schedule(); } };
   const fmtStat=v=>(typeof v==='number'?(v>=1e6?v.toExponential(3):String(Math.round(v*100)/100)):'');
-  const showStats=(s,name)=>{ if(!s) return; $('ownNow').textContent='Editing: '+name+' · EXP '+fmtStat(s.exp)+' · rolls '+fmtStat(s.rolls)+' · rebirths '+s.rebirths+' · luck '+s.luck+(s.pending?' · '+s.pending+' gift roll'+(s.pending>1?'s':'')+' waiting':''); };
+  const showStats=(s,name)=>{ if(!s) return; $('ownNow').textContent='Editing: '+name+' · EXP '+fmtStat(s.exp)+' · rolls '+fmtStat(s.rolls)+' · rebirths '+s.rebirths+' · shards '+fmtStat(s.shards||0)+' · luck '+s.luck+(s.pending?' · '+s.pending+' gift roll'+(s.pending>1?'s':'')+' waiting':''); };
   const labels=()=>{ const o=!!target; $('ownRoll').textContent=o?'Send as gift roll':'Roll it'; $('ownRollH').textContent=o?'Gift roll':'Custom roll';
     $('ownRollInfo').textContent=o?'Choose all six tiles. It waits for the player, even offline. Their very next roll is this one, with a note that it is a gift. Nothing is shown to them before then.':'Choose all six tiles, with any element and any mutation. It counts as a real roll: EXP, Index, best roll and the cutscene.';
     $('ownGo').textContent=o?'Give to player':'Give'; $('ownSave').textContent=o?'Save their stats':'Save stats'; };
@@ -2538,7 +2577,7 @@ function initOwner(){
     set(false); applyRemote(d); present(renameRift(d.p),renameRift(d.notes||[]),d.outs||[],false,false);
   }));
   $('ownSave').addEventListener('click',()=>run(async()=>{
-    const values={}; st.querySelectorAll('input').forEach(i=>{ if(i.value!=='') values[i.dataset.f]=Number(i.value); });
+    const values={}; st.querySelectorAll('input').forEach(i=>{ if(i.value.trim()!==''){ const t=i.value.trim().toLowerCase(); values[i.dataset.f]=(t==='inf'||t==='infinity'||t==='\u221e')?'inf':Number(t); } });
     if(!Object.keys(values).length){ msg.textContent='Type a value first.'; return; }
     const d=await call({action:'set',values});
     st.querySelectorAll('input').forEach(i=>{i.value='';});
@@ -2619,7 +2658,7 @@ function init(){
   $('idxClose').addEventListener('click',()=>setIdx(false));
   ip.addEventListener('click',e=>{ if(e.target===ip) setIdx(false); });
   document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&!ip.hidden) setIdx(false); });
-  initOwner();
+  initOwner(); initQuests();
   $('rollBtn').addEventListener('click',()=>doRoll(false));
   $('autoChk').addEventListener('change',e=>{S.autoOn=e.target.checked;schedule();save(); if(REMOTE()) PRAuth.call('auto',{on:S.autoOn}).catch(()=>{});});
   document.addEventListener('keydown',e=>{

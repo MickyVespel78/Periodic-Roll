@@ -25,7 +25,7 @@ A.boot=async function(){
     const pr=await A.client.from('profiles').select('username').eq('id',u.id).maybeSingle();
     A.name=(pr.data&&pr.data.username)||(u.user_metadata&&u.user_metadata.username)||'Player';
     const r=await A.call('state');
-    A.serverState=r.S; A.bl=r.bl||0;
+    A.serverState=r.S; A.bl=r.bl||0; A.Q=r.Q||null;
     try{ const w=await A.client.functions.invoke('admin',{body:{action:'whoami'}}); A.owner=!!(w.data&&w.data.owner); }catch(e){ A.owner=false; }
   }catch(e){ A.user=null; A.mode='guest'; A.bootErr=(e&&e.message)||'Could not reach the server.'; }
 };

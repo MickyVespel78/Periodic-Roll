@@ -681,3 +681,15 @@ body.perf :not(.cut):not(.cut *),body.perf :not(.cut):not(.cut *)::before,body.p
 .own-chip button.x{color:var(--muted);padding:6px 9px 6px 2px}
 .own-chip.on{border-color:var(--ink);font-weight:700}
 .own-now{font:700 13px var(--f-mono);margin:8px 0 0}
+
+.q-tabs{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.q-tabs .gbtn.on{background:var(--ink);color:var(--surface)}
+.q-time{font:500 12px var(--f-mono);color:var(--muted);margin:4px 0 8px}
+.q-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.q-row b{font-weight:600;overflow-wrap:anywhere}
+.q-row small{display:block;color:var(--muted);font:500 12px var(--f-mono)}
+.q-row progress{grid-column:1/-1;width:100%;height:8px}
+.q-row.done b::after{content:"  done";color:var(--muted);font:500 11px var(--f-mono)}
+.q-row .buy{width:auto;padding:8px 14px}
+.qdot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--ink);margin-left:8px;vertical-align:middle}
+.toastq{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:80;background:var(--surface);color:var(--ink);border:1px solid var(--ink);border-radius:10px;padding:10px 16px;font:600 14px var(--f-mono);box-shadow:0 8px 30px rgba(0,0,0,.3);max-width:calc(100vw - 32px)}

@@ -8,12 +8,13 @@ const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE
 const MAPS: Record<number, string> = { 1: "outers", 2: "stars", 3: "impacts", 4: "systems", 5: "holes", 6: "beyonds", 7: "multis", 8: "omnis", 9: "absolutes", 10: "ones", 11: "unis", 12: "dets", 13: "secs" };
 const levelOf = (life: number) => Math.floor(2 * Math.log10(life + 1)) + 1;
 // Owner limits are far beyond anything a normal player can reach (players: 10 rebirths, luck 20, speed 10).
-const UPMAX: Record<string, number> = { auto: 1, speed: 1000, luck: 1000 };
-const RBMAX = 1000;
+// "inf" means the biggest value the database can hold; real infinity cannot be stored in a save.
+const UPMAX: Record<string, number> = { auto: 1, speed: 1e9, luck: 1e9 };
+const RBMAX = 2e9;
 const clean = (D: any) => { const S: any = { ...D }; delete S._t; delete S._bu; delete S._pb; return S; };
-const num = (v: unknown, max: number) => { const x = Number(v); return Number.isFinite(x) && x >= 0 && x <= max ? x : null; };
+const num = (v: unknown, max: number) => { if (typeof v === "string" && /^\s*(inf|infinity|∞)\s*$/i.test(v)) return max; const x = Number(v); return Number.isFinite(x) && x >= 0 && x <= max ? x : null; };
 const KEYS = ["found", "words", "rx", "dets", "secs", "outers", "stars", "impacts", "systems", "holes", "beyonds", "multis", "unis", "omnis", "absolutes", "ones"];
-const stats = (D: any, pending: number) => ({ exp: D.exp || 0, life: D.life || 0, rolls: D.rolls || 0, rebirths: D.rebirths || 0, luck: D.up?.luck || 0, speed: D.up?.speed || 0, auto: D.up?.auto || 0, best: D.best ? D.best.odds : 0, pending });
+const stats = (D: any, pending: number) => ({ exp: D.exp || 0, life: D.life || 0, rolls: D.rolls || 0, rebirths: D.rebirths || 0, shards: D.shards || 0, luck: D.up?.luck || 0, speed: D.up?.speed || 0, auto: D.up?.auto || 0, best: D.best ? D.best.odds : 0, pending });
 
 async function write(uid: string, D: any) {
   const best = D.best;
@@ -142,15 +143,16 @@ Deno.serve(async (req) => {
       if (v.exp !== undefined) { const x = num(v.exp, 1e300); if (x === null) return j({ error: "Bad EXP." }, 400); D.exp = x; if ((D.life || 0) < x) D.life = x; }
       if (v.life !== undefined) { const x = num(v.life, 1e300); if (x === null) return j({ error: "Bad lifetime EXP." }, 400); D.life = x; }
       if (v.level !== undefined) { const x = num(v.level, 600); if (x === null || x < 1) return j({ error: "Level is 1 to 600." }, 400); D.life = Math.ceil(Math.pow(10, (Math.floor(x) - 1) / 2)); if ((D.exp || 0) > D.life) D.exp = D.life; }
-      if (v.rolls !== undefined) { const x = num(v.rolls, 1e15); if (x === null) return j({ error: "Bad rolls." }, 400); D.rolls = Math.floor(x); if ((D.tot || 0) < D.rolls) D.tot = D.rolls; }
-      if (v.rebirths !== undefined) { const x = num(v.rebirths, RBMAX); if (x === null) return j({ error: "Rebirths are 0 to " + RBMAX + "." }, 400); D.rebirths = Math.floor(x); if (D.rebirths >= 3) { D.up.auto = 1; } }
+      if (v.rolls !== undefined) { const x = num(v.rolls, 1e300); if (x === null) return j({ error: "Bad rolls." }, 400); D.rolls = x; if ((D.tot || 0) < D.rolls) D.tot = D.rolls; }
+      if (v.rebirths !== undefined) { const x = num(v.rebirths, RBMAX); if (x === null) return j({ error: "Rebirths are 0 to 2,000,000,000 (or inf)." }, 400); D.rebirths = Math.floor(x); if (D.rebirths >= 3) { D.up.auto = 1; } }
+      if (v.shards !== undefined) { const x = num(v.shards, 1e300); if (x === null) return j({ error: "Bad shards." }, 400); D.shards = Math.floor(x); }
       if (v.bestodds !== undefined) {
         const x = num(v.bestodds, 1e290); if (x === null || x < 1) return j({ error: "Best roll is 1 or more." }, 400);
         const base = D.best || D.last || { sq: [[1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1]], gain: 1, bonus: [], hw: [], hx: [] };
         D.best = { ...base, odds: x };
         D.top = [D.best, ...D.top.filter((t: any) => t.odds < x)].slice(0, 5);
       }
-      for (const k of ["auto", "speed", "luck"]) if (v[k] !== undefined) { const x = num(v[k], UPMAX[k]); if (x === null) return j({ error: "Bad " + k + " level (0 to " + UPMAX[k] + ")." }, 400); D.up[k] = Math.floor(x); if (k === "auto" && D.up.auto > 0) D.autoOn = true; }
+      for (const k of ["auto", "speed", "luck"]) if (v[k] !== undefined) { const x = num(v[k], UPMAX[k]); if (x === null) return j({ error: "Bad " + k + " level (a number or inf)." }, 400); D.up[k] = Math.floor(x); if (k === "auto" && D.up.auto > 0) D.autoOn = true; }
       return done();
     }
     return j({ error: "unknown action" }, 400);

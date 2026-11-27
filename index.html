@@ -33,9 +33,10 @@
       <div><dt>Best roll</dt><dd id="best">none yet</dd></div>
       <div><dt>Luck</dt><dd id="luck">0.0</dd></div>
       <div><dt>EXP bonus</dt><dd id="xm">&times;1.0</dd></div>
+      <div id="shardBox" hidden><dt>Shards</dt><dd id="shards">0</dd></div>
     </dl>
     <p class="msline" id="msLine"></p>
-    <div class="toolbar"><button type="button" class="gbtn" id="rarBtn" aria-expanded="false" aria-controls="rarPanel">Rarity guide</button><button type="button" class="gbtn" id="idxBtn" aria-expanded="false" aria-controls="idxPanel">Index</button><button type="button" class="gbtn" id="ownBtn" hidden>Owner tools</button><button type="button" class="gbtn" id="themeBtn">Theme: auto</button><button type="button" class="gbtn" id="perfBtn" aria-pressed="false">Performance mode: off</button></div>
+    <div class="toolbar"><button type="button" class="gbtn" id="rarBtn" aria-expanded="false" aria-controls="rarPanel">Rarity guide</button><button type="button" class="gbtn" id="idxBtn" aria-expanded="false" aria-controls="idxPanel">Index</button><button type="button" class="gbtn" id="qBtn" aria-expanded="false" aria-controls="qPanel">Quests<span class="qdot" id="qDot" hidden></span></button><button type="button" class="gbtn" id="ownBtn" hidden>Owner tools</button><button type="button" class="gbtn" id="themeBtn">Theme: auto</button><button type="button" class="gbtn" id="perfBtn" aria-pressed="false">Performance mode: off</button></div>
   </header>
 
   <div class="layout">
@@ -153,6 +154,16 @@
   </div>
 </div>
 
+<div id="qPanel" class="rar" hidden role="dialog" aria-modal="true" aria-labelledby="qTitle">
+  <div class="rar-card" style="max-width:720px">
+    <div class="sec-head"><h2 id="qTitle">Quests and achievements</h2><button type="button" class="gbtn" id="qClose">Close</button></div>
+    <p class="info">Quests pay EXP when you press Claim. Achievements unlock by themselves and pay shards (15 to 50 each). Shards have no use yet.</p>
+    <p class="acct-msg" id="qMsg" aria-live="polite"></p>
+    <div class="q-tabs" role="tablist"><button type="button" class="gbtn" data-t="d">Daily</button><button type="button" class="gbtn" data-t="w">Weekly</button><button type="button" class="gbtn" data-t="a">All time</button><button type="button" class="gbtn" data-t="ach">Achievements</button></div>
+    <div id="qBody"></div>
+  </div>
+</div>
+
 <div id="ownPanel" class="rar" hidden role="dialog" aria-modal="true" aria-labelledby="ownTitle">
   <div class="rar-card" style="max-width:640px">
     <div class="sec-head"><h2 id="ownTitle">Owner tools</h2><button type="button" class="gbtn" id="ownClose">Close</button></div>
@@ -176,7 +187,7 @@
     <button type="button" class="buy" id="ownGo">Give</button>
 
     <h3 class="own-h">Edit stats</h3>
-    <p class="info" id="ownStatInfo">Leave a box empty to keep it. Your own limits are far higher than a normal player can ever reach.</p>
+    <p class="info" id="ownStatInfo">Leave a box empty to keep it. Type inf for the biggest value the game can store (real infinity cannot be saved). Normal players stay capped.</p>
     <div class="own-grid" id="ownStats"></div>
     <button type="button" class="buy" id="ownSave">Save stats</button>
   </div>
