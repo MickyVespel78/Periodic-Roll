@@ -77,11 +77,13 @@ function checkAch(S: any, now: number) {
   for (const [id, name, , key, goal, sh] of ACH) if (!S.ach[id] && metric(key, S) >= goal) { S.ach[id] = now; S.shards += sh; got.push({ name, shards: sh }); }
   return got;
 }
-const reward = (sc: string, S: any) => sc === "d" ? Math.max(200, Math.round(0.01 * (S.life || 0))) : sc === "w" ? Math.max(2000, Math.round(0.05 * (S.life || 0))) : Math.max(10000, Math.round(0.15 * (S.life || 0)));
+const QR: Record<string, number> = { d_n: 1e8, d_x: 1.5e8, d_w: 2e8, d_o: 3e8, w_n: 1e9, w_x: 1.5e9, w_o: 3e9, w_m: 5e9,
+  a_t1: 1e10, a_e: 1.5e10, a_w: 2.5e10, a_k: 3e10, a_t2: 5e10, a_r1: 1e11, a_t3: 2.5e11, a_r5: 5e11, a_b: 1e12 };
+const reward = (id: string) => QR[id] || 1e8;
 const qprog = (sc: string, key: string, S: any) => sc === "a" ? metric(key, S) : (S.qs[sc].p[key] || 0);
 function view(S: any, now: number) {
   const q: any = {};
-  for (const sc of ["d", "w", "a"]) q[sc] = QD[sc].map(([id, title, key, goal]) => { const pr = qprog(sc, key, S); return { id, title, prog: Math.min(pr, goal), goal, done: pr >= goal, claimed: !!S.qs[sc].c[id], reward: reward(sc, S) }; });
+  for (const sc of ["d", "w", "a"]) q[sc] = QD[sc].map(([id, title, key, goal]) => { const pr = qprog(sc, key, S); return { id, title, prog: Math.min(pr, goal), goal, done: pr >= goal, claimed: !!S.qs[sc].c[id], reward: reward(id) }; });
   const ach = ACH.map(([id, name, desc, key, goal, sh]) => ({ id, name, desc, prog: Math.min(metric(key, S), goal), goal, shards: sh, done: !!S.ach[id] }));
   return { shards: S.shards, q, ach, resetD: (dayId(now) + 1) * 864e5 - now, resetW: (weekId(now) * 7 - 3 + 7) * 864e5 - now };
 }
@@ -165,7 +167,7 @@ Deno.serve(async (req) => {
       if (!def) return j({ error: "No such quest." }, 400);
       if (S.qs[sc].c[id]) return j({ error: "Already claimed." }, 400);
       if (qprog(sc, def[2], S) < def[3]) return j({ error: "Not finished yet." }, 400);
-      const rw = reward(sc, S); S.qs[sc].c[id] = 1; S.exp += rw; S.life += rw; out.claimed = rw;
+      const rw = reward(id); S.qs[sc].c[id] = 1; S.exp += rw; S.life += rw; out.claimed = rw;
     }
     else if (act === "reset") { const k = { shards: S.shards, ach: S.ach, qs: S.qs }; Object.assign(S, fresh(), k); bu = 0; pb = false; }
     else return j({ error: "unknown action" }, 400);
