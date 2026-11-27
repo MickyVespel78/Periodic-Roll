@@ -2525,7 +2525,7 @@ function initOwner(){
   const tiles=$('ownTiles'); tiles.innerHTML='';
   for(let i=0;i<6;i++){ const d=document.createElement('div'); d.className='own-tile';
     d.innerHTML='<select class="te" aria-label="Tile '+(i+1)+' element">'+elOpts()+'</select><select class="tm" aria-label="Tile '+(i+1)+' mutation">'+muOpts(true)+'</select>'; tiles.appendChild(d); }
-  const FIELDS=[['exp','EXP'],['life','Lifetime EXP'],['rolls','Rolls'],['rebirths','Rebirths (number or inf)'],['luck','Lucky isotopes (number or inf)'],['speed','Quick hands (number or inf)'],['auto','Auto-roller (0 or 1)'],['shards','Shards']];
+  const FIELDS=[['exp','EXP'],['life','Lifetime EXP'],['rolls','Rolls'],['rebirths','Rebirths (up to 1 billion or inf)'],['luck','Lucky isotopes (up to 1 billion or inf)'],['speed','Quick hands (up to 1 billion or inf)'],['auto','Auto-roller (0 or 1)'],['shards','Shards']];
   const st=$('ownStats'); st.innerHTML=FIELDS.map(f=>'<label class="own-l">'+f[1]+'<input data-f="'+f[0]+'" type="text" autocomplete="off" spellcheck="false" inputmode="decimal" placeholder="number or inf"></label>').join('');
   const set=o=>{ pn.hidden=!o; msg.textContent=''; };
   btn.addEventListener('click',()=>set(pn.hidden));

@@ -77,7 +77,7 @@ function checkAch(S: any, now: number) {
   for (const [id, name, , key, goal, sh] of ACH) if (!S.ach[id] && metric(key, S) >= goal) { S.ach[id] = now; S.shards += sh; got.push({ name, shards: sh }); }
   return got;
 }
-const reward = (sc: string, S: any) => sc === "d" ? Math.max(500, Math.round(0.03 * (S.life || 0))) : sc === "w" ? Math.max(5000, Math.round(0.15 * (S.life || 0))) : Math.max(20000, Math.round(0.5 * (S.life || 0)));
+const reward = (sc: string, S: any) => sc === "d" ? Math.max(200, Math.round(0.01 * (S.life || 0))) : sc === "w" ? Math.max(2000, Math.round(0.05 * (S.life || 0))) : Math.max(10000, Math.round(0.15 * (S.life || 0)));
 const qprog = (sc: string, key: string, S: any) => sc === "a" ? metric(key, S) : (S.qs[sc].p[key] || 0);
 function view(S: any, now: number) {
   const q: any = {};
