@@ -65,12 +65,12 @@ function bar(){
   const host=$('acctBar'); if(!host) return; host.textContent='';
   if(!A.enabled){ return; }
   if(A.mode==='account'&&A.user){
-    host.appendChild(el('span','acct-who','Account: '+A.name));
+    host.appendChild(el('span','acct-who',A.name));
     if(A.owner) host.appendChild(el('b','ownertag','OWNER'));
     const b=el('button','reset','Log out'); b.type='button'; b.addEventListener('click',A.signOut); host.appendChild(b);
   }else{
-    host.appendChild(el('span','acct-who','Guest (saved in this browser only)'));
-    const b=el('button','reset','Log in / Create account'); b.type='button'; b.addEventListener('click',()=>modal('choice')); host.appendChild(b);
+    host.appendChild(el('span','acct-who','Guest'));
+    const b=el('button','reset','Log in'); b.type='button'; b.addEventListener('click',()=>modal('choice')); host.appendChild(b);
   }
 }
 let box=null;

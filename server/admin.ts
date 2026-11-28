@@ -15,7 +15,7 @@ const RBMAX = LIM;
 const clean = (D: any) => { const S: any = { ...D }; delete S._t; delete S._bu; delete S._pb; return S; };
 const num = (v: unknown, max: number) => { if (typeof v === "string" && /^\s*(inf|infinity|∞)\s*$/i.test(v)) return max; const x = Number(v); return Number.isFinite(x) && x >= 0 && x <= max ? x : null; };
 const KEYS = ["found", "words", "rx", "dets", "secs", "outers", "stars", "impacts", "systems", "holes", "beyonds", "multis", "unis", "omnis", "absolutes", "ones"];
-const stats = (D: any, pending: number) => ({ exp: D.exp || 0, life: D.life || 0, rolls: D.rolls || 0, rebirths: D.rebirths || 0, shards: D.shards || 0, luck: D.up?.luck || 0, speed: D.up?.speed || 0, auto: D.up?.auto || 0, best: D.best ? D.best.odds : 0, pending });
+const stats = (D: any, pending: number) => ({ exp: D.exp || 0, life: D.life || 0, rolls: D.rolls || 0, rebirths: D.rebirths || 0, trb: D.trb || 0, level: levelOf(D.life || 0), shards: D.shards || 0, luck: D.up?.luck || 0, speed: D.up?.speed || 0, auto: D.up?.auto || 0, best: D.best ? D.best.odds : 0, pending });
 
 async function write(uid: string, D: any) {
   const best = D.best;
@@ -115,7 +115,7 @@ Deno.serve(async (req) => {
     if (act === "forceroll") { // own account only (others returned above)
       const sq: any[] = body.tiles.map((t: any) => ({ z: Math.floor(Number(t.z)), n: (Math.floor(Number(t.n)) >= 1 && Math.floor(Number(t.n)) <= 118) ? Math.floor(Number(t.n)) : 1 + Math.floor(Math.random() * 118), m: Math.floor(Number(t.m) || 0) }));
       const ev = G.evaluate(sq);
-      const expMult = 1 + 0.5 * (D.rebirths || 0);
+      const expMult = (1 + 0.5 * (D.rebirths || 0)) * (1 + 2 * (D.trb || 0));
       const gain = Math.max(1, Math.round(Math.pow(ev.odds, 0.7) * expMult));
       const p = { odds: ev.odds, gain, sq: sq.map((s) => s.m ? [s.z, s.n, s.m] : [s.z, s.n]), bonus: ev.bonus, hw: ev.hw, hx: ev.hx };
       D.exp = (D.exp || 0) + gain; D.life = (D.life || 0) + gain; D.rolls = (D.rolls || 0) + 1; D.tot = (D.tot || 0) + 1;
@@ -146,6 +146,7 @@ Deno.serve(async (req) => {
       if (v.level !== undefined) { const x = num(v.level, 19); if (x === null || x < 1) return j({ error: "Level is 1 to 19." }, 400); D.life = Math.ceil(Math.pow(10, (Math.floor(x) - 1) / 2)); if ((D.exp || 0) > D.life) D.exp = D.life; }
       if (v.rolls !== undefined) { const x = num(v.rolls, LIM); if (x === null) return j({ error: "Bad rolls." }, 400); D.rolls = x; if ((D.tot || 0) < D.rolls) D.tot = D.rolls; }
       if (v.rebirths !== undefined) { const x = num(v.rebirths, RBMAX); if (x === null) return j({ error: "Rebirths are 0 to 1,000,000,000 (or inf)." }, 400); D.rebirths = Math.floor(x); if (D.rebirths >= 3) { D.up.auto = 1; } }
+      if (v.trb !== undefined) { const x = num(v.trb, LIM); if (x === null) return j({ error: "True rebirths are 0 to 1,000,000,000 (or inf)." }, 400); D.trb = Math.floor(x); if (D.trb > 0) { D.up.auto = 1; D.autoOn = true; } }
       if (v.shards !== undefined) { const x = num(v.shards, LIM); if (x === null) return j({ error: "Bad shards." }, 400); D.shards = Math.floor(x); }
       if (v.bestodds !== undefined) {
         const x = num(v.bestodds, LIM); if (x === null || x < 1) return j({ error: "Best roll is 1 or more." }, 400);

@@ -16,8 +16,8 @@ const DEFS: Record<string, { max: number; cost: (l: number) => number }> = {
   speed: { max: 10, cost: (l) => Math.round(40000 * Math.pow(2, l)) },
   luck: { max: 20, cost: (l) => Math.round(150 * Math.pow(1.9, l)) },
 };
-const fresh = (): any => ({ exp: 0, life: 0, rolls: 0, tot: 0, up: { auto: 0, speed: 0, luck: 0 }, autoOn: false, found: {}, words: {}, rx: {}, best: null, top: [], recent: [], last: null, rebirths: 0, shards: 0, ach: {}, qs: {}, dets: {}, secs: {}, outers: {}, stars: {}, impacts: {}, systems: {}, holes: {}, beyonds: {}, multis: {}, unis: {}, omnis: {}, absolutes: {}, ones: {} });
-const KEEP = ["shards", "ach", "qs", "rolls", "found", "words", "rx", "top", "recent", "secs", "dets", "tot", "life", "best", "outers", "stars", "impacts", "systems", "holes", "beyonds", "multis", "unis", "omnis", "absolutes", "ones"];
+const fresh = (): any => ({ exp: 0, life: 0, rolls: 0, tot: 0, up: { auto: 0, speed: 0, luck: 0 }, autoOn: false, found: {}, words: {}, rx: {}, best: null, top: [], recent: [], last: null, rebirths: 0, trb: 0, shards: 0, ach: {}, qs: {}, dets: {}, secs: {}, outers: {}, stars: {}, impacts: {}, systems: {}, holes: {}, beyonds: {}, multis: {}, unis: {}, omnis: {}, absolutes: {}, ones: {} });
+const KEEP = ["trb", "shards", "ach", "qs", "rolls", "found", "words", "rx", "top", "recent", "secs", "dets", "tot", "life", "best", "outers", "stars", "impacts", "systems", "holes", "beyonds", "multis", "unis", "omnis", "absolutes", "ones"];
 function merge(S: any, d: any) {
   if (!d || typeof d !== "object") return;
   for (const k of Object.keys(S)) {
@@ -27,8 +27,12 @@ function merge(S: any, d: any) {
   }
 }
 const msCount = (S: any) => MS.filter((t) => (S.tot || 0) >= t).length;
-const expMult = (S: any) => 1 + 0.5 * S.rebirths;
-const effL = (S: any, bu: number, now: number) => S.up.luck + 0.5 * S.rebirths + MS_LUCK * msCount(S) + (now < bu ? BOOST_LUCK : 0);
+// True Rebirth: needs 10 rebirths; EXP x3 and +3 luck each; players can earn 1, the owner can give more.
+const TRB_MAX = 1, TRB_EXP = 3, TRB_LUCK = 3;
+const trbN = (S: any) => S.trb || 0;
+const effRb = (S: any) => S.rebirths + 10 * trbN(S);
+const expMult = (S: any) => (1 + 0.5 * S.rebirths) * (1 + (TRB_EXP - 1) * trbN(S));
+const effL = (S: any, bu: number, now: number) => S.up.luck + 0.5 * S.rebirths + TRB_LUCK * trbN(S) + MS_LUCK * msCount(S) + (now < bu ? BOOST_LUCK : 0);
 const mutMap = (S: any, m: number) => m === 1 ? S.outers : m === 2 ? S.stars : m === 3 ? S.impacts : m === 4 ? S.systems : m === 5 ? S.holes : m === 6 ? S.beyonds : m === 7 ? S.multis : m === 11 ? S.unis : m === 12 ? S.dets : m === 13 ? S.secs : m === 8 ? S.omnis : m === 9 ? S.absolutes : S.ones;
 
 // ---- Achievements (pay shards, unlock by themselves) and quests (pay EXP, press Claim) ----
@@ -108,7 +112,7 @@ Deno.serve(async (req) => {
     else if (act === "roll") {
       if (now - t < MIN_GAP) return j({ error: "slow" }, 429);
       t = now;
-      G.setMods(1 + MS_MUT * msCount(S), G.detChance(S.rebirths));
+      G.setMods(1 + MS_MUT * msCount(S), G.detChance(effRb(S)));
       // A roll the owner queued for this player is used first, even if they were offline when it was sent.
       let gift: any[] | null = null;
       const { data: pg } = await admin.from("pending_rolls").select("id,tiles").eq("user_id", uid).order("id").limit(1).maybeSingle();
@@ -159,7 +163,15 @@ Deno.serve(async (req) => {
       const keep: any = {}; for (const k of KEEP) keep[k] = S[k];
       Object.assign(S, fresh()); for (const k of KEEP) S[k] = keep[k];
       S.rebirths = r + 1; bu = 0; pb = false;
-      if (S.rebirths >= 3) { S.up.auto = 1; S.autoOn = true; }
+      if (S.rebirths >= 3 || trbN(S) > 0) { S.up.auto = 1; S.autoOn = true; }
+    }
+    else if (act === "truerebirth") {
+      if (trbN(S) >= TRB_MAX) return j({ error: "You already have a True Rebirth." }, 400);
+      if (S.rebirths < RB_MAX) return j({ error: "A True Rebirth needs 10 rebirths." }, 400);
+      const keep: any = {}; for (const k of KEEP) keep[k] = S[k];
+      Object.assign(S, fresh()); for (const k of KEEP) S[k] = keep[k];
+      S.rebirths = 0; S.trb = trbN(S) + 1; bu = 0; pb = false;
+      S.up.auto = 1; S.autoOn = true;
     }
     else if (act === "claim") {
       const id = String(body.q || ""); const sc = id.charAt(0);

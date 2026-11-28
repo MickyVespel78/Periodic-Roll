@@ -256,7 +256,7 @@ function setPerf(on,store){
 function initTheme(){
   const b=document.getElementById('themeBtn'); if(!b) return;
   const dark=()=>document.documentElement.getAttribute('data-theme')==='dark'||(!document.documentElement.getAttribute('data-theme')&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches);
-  const paint=()=>{ const t=document.documentElement.getAttribute('data-theme'); b.textContent='Theme: '+(t||'auto')+' (tap for '+(dark()?'light':'dark')+')'; };
+  const paint=()=>{ const t=document.documentElement.getAttribute('data-theme'); b.textContent='Theme: '+(dark()?'dark':'light')+(t?'':' (auto)'); };
   b.addEventListener('click',()=>{ const n=dark()?'light':'dark'; document.documentElement.setAttribute('data-theme',n); try{localStorage.setItem('periodic-roll-theme',n);}catch(e){} paint(); });
   paint();
 }
@@ -289,8 +289,12 @@ let boostUntil=0, boostT=null, pendingBoost=false;
 const MS=[1000,10000,50000,250000,1000000];
 const MS_LUCK=0.15, MS_MUT=0.03;
 const msCount=()=>{let c=0; for(const t of MS) if((S.tot||0)>=t) c++; return c;};
-const effL=()=>S.up.luck+0.5*S.rebirths+MS_LUCK*msCount()+(Date.now()<boostUntil?BOOST_LUCK:0);
-const expMult=()=>1+0.5*S.rebirths;
+/* True Rebirth: 1 needs 10 rebirths. Each gives EXP x3 and +3 luck for good. Players can earn 1; only the owner can give more. */
+const TRB_LUCK=3, TRB_EXP=3, TRB_MAX=1;
+const trbN=()=>S.trb||0;
+const effRb=()=>S.rebirths+10*trbN();
+const effL=()=>S.up.luck+0.5*S.rebirths+TRB_LUCK*trbN()+MS_LUCK*msCount()+(Date.now()<boostUntil?BOOST_LUCK:0);
+const expMult=()=>(1+0.5*S.rebirths)*(1+(TRB_EXP-1)*trbN());
 
 const DEFS=[
   {k:'auto',name:'Auto-roller',max:1,cost:()=>6000000,desc:l=>l?'Rolls by itself while this page is open':'Manual rolls only'},
@@ -298,7 +302,7 @@ const DEFS=[
   {k:'luck',name:'Lucky isotopes',max:20,cost:l=>Math.round(150*Math.pow(1.9,l)),desc:l=>l?('Rarer elements favoured, '+(l*0.4).toFixed(1)+'% forced resonance'):'Base element odds'}
 ];
 
-const fresh=()=>({exp:0,life:0,rolls:0,tot:0,up:{auto:0,speed:0,luck:0},autoOn:false,found:{},words:{},rx:{},best:null,top:[],recent:[],last:null,rebirths:0,dets:{},secs:{},outers:{},stars:{},impacts:{},systems:{},holes:{},beyonds:{},multis:{},unis:{},omnis:{},absolutes:{},ones:{}});
+const fresh=()=>({exp:0,life:0,rolls:0,tot:0,up:{auto:0,speed:0,luck:0},autoOn:false,found:{},words:{},rx:{},best:null,top:[],recent:[],last:null,rebirths:0,trb:0,dets:{},secs:{},outers:{},stars:{},impacts:{},systems:{},holes:{},beyonds:{},multis:{},unis:{},omnis:{},absolutes:{},ones:{}});
 const S=fresh();
 const mutMap=m=>m===1?S.outers:m===2?S.stars:m===3?S.impacts:m===4?S.systems:m===5?S.holes:m===6?S.beyonds:m===7?S.multis:m===11?S.unis:m===12?S.dets:m===13?S.secs:m===8?S.omnis:m===9?S.absolutes:S.ones;
 function merge(d){
@@ -332,8 +336,8 @@ function renderQuests(){
   let h='';
   if(qTab==='ach'){
     const n=Q.ach.filter(a=>a.done).length;
-    h+='<p class="q-time">'+n+' / '+Q.ach.length+' unlocked · '+fmt(Q.shards)+' shards</p>';
-    Q.ach.forEach(a=>{ h+='<div class="q-row'+(a.done?' done':'')+'"><div><b>'+a.name+'</b><small>'+a.desc+'</small></div><span class="info">+'+a.shards+' shards</span><progress max="1" value="'+(a.goal?Math.min(1,a.prog/a.goal):1)+'"></progress></div>'; });
+    h+='<p class="q-time">'+n+' / '+Q.ach.length+' unlocked · '+fmt(Q.shards)+' '+'<svg class="shard-ico sm" aria-hidden="true"><use href="#i-shard"/></svg>'+' shards</p>';
+    Q.ach.forEach(a=>{ h+='<div class="q-row'+(a.done?' done':'')+'"><div><b>'+a.name+'</b><small>'+a.desc+'</small></div><span class="info">+'+a.shards+' '+'<svg class="shard-ico sm" aria-hidden="true"><use href="#i-shard"/></svg>'+'</span><progress max="1" value="'+(a.goal?Math.min(1,a.prog/a.goal):1)+'"></progress></div>'; });
   } else {
     h+='<p class="q-time">'+(qTab==='d'?'Resets in '+qTime(Q.resetD):qTab==='w'?'Resets in '+qTime(Q.resetW):'Never resets')+'</p>';
     Q.q[qTab].forEach(x=>{ h+='<div class="q-row'+(x.done?' done':'')+'"><div><b>'+x.title+'</b><small>'+fmt(x.prog)+' / '+fmt(x.goal)+' · reward '+fmt(x.reward)+' EXP</small></div>'
@@ -513,6 +517,7 @@ function renderWallet(){
   $('luck').textContent=effL().toFixed(2).replace(/0$/,'');
   renderMs();
   $('xm').textContent='×'+expMult().toFixed(1);
+  const ts=$('trbStat'); if(ts) ts.textContent=String(trbN());
   renderRebirth();
 }
 function miniHTML(sq){
@@ -552,7 +557,7 @@ function renderDisc(){
     [9,'2 Omniverse tiles in one roll. Each pair has a 7 in 20 chance to collide into an Absolute.',ABS_M],
     [10,'Once an Absolute forms, every other tile has a 3 in 5 chance to be pulled into it. All six tiles Absolute makes The One Before All.',ONE_M],
     [13,'Determination and The One Before All in the same roll. It came from you, and so did the other. Together it clicks.',SEC_M]];
-  $('mutGuide').innerHTML=G.map(r=>{const sec=r[0]===13, found=sec&&Object.keys(S.secs).length>0; if(sec&&!found) return '<li><b>???</b> A secret. Nobody told you how. Find it.</li>'; const p=r[0]===12?detChance(S.rebirths):sec?ODDS[10]*detChance(Math.max(1,S.rebirths)):ODDS[r[0]]; return '<li'+(Object.keys(mutMap(r[0])).length?' class="got"':'')+'><b>'+MUTN[r[0]]+'</b> '+r[1]+'<span class="mgp">'+(sec?('<strong>about 1 in '+fmt(Math.round(1/p))+' rolls at your rebirth level</strong> · pays'):r[0]===12?('<strong>'+(p?pctOf(p)+' per roll now':'Locked until Rebirth 1')+'</strong> (Rebirth 1: 0.0001%, 2: 0.001%, 5: 0.01%, 10: 0.1%) · pays'):('<strong>'+pctOf(p)+' per roll</strong>, about 1 in '+fmt(Math.round(1/p))+' rolls · pays'))+' ×'+fmt(r[2])+' per tile</span></li>';}).join('')
+  $('mutGuide').innerHTML=G.map(r=>{const sec=r[0]===13, found=sec&&Object.keys(S.secs).length>0; if(sec&&!found) return '<li><b>???</b> A secret. Nobody told you how. Find it.</li>'; const p=r[0]===12?detChance(effRb()):sec?ODDS[10]*detChance(Math.max(1,effRb())):ODDS[r[0]]; return '<li'+(Object.keys(mutMap(r[0])).length?' class="got"':'')+'><b>'+MUTN[r[0]]+'</b> '+r[1]+'<span class="mgp">'+(sec?('<strong>about 1 in '+fmt(Math.round(1/p))+' rolls at your rebirth level</strong> · pays'):r[0]===12?('<strong>'+(p?pctOf(p)+' per roll now':'Locked until Rebirth 1')+'</strong> (Rebirth 1: 0.0001%, 2: 0.001%, 5: 0.01%, 10: 0.1%) · pays'):('<strong>'+pctOf(p)+' per roll</strong>, about 1 in '+fmt(Math.round(1/p))+' rolls · pays'))+' ×'+fmt(r[2])+' per tile</span></li>';}).join('')
     +'<li class="note">Chances are per roll at base luck. Luck, rebirths and spin milestones all raise them.</li>';
   $('outList').innerHTML=mk.length?mk.join(''):'<li style="border:0;background:none;padding:0;color:var(--muted)">None yet. Any tile can turn Planetary (1 in 5,000) or Star (1 in 10,000), and one mutation can ripple onto the other tiles. A Planetary and a Star in one roll collide into an Impact, and one collision in four forms a Solar System. 3 in 10 Stars collapse into a Black Hole, and all three together become Rift.</li>';
 }
@@ -562,7 +567,7 @@ let rolling=false;
 function doRoll(auto){
   if(busy||rolling) return;
   if(REMOTE()){ doRollRemote(auto); return; }
-  mutBoost=1+MS_MUT*msCount(); detP=detChance(S.rebirths);
+  mutBoost=1+MS_MUT*msCount(); detP=detChance(effRb());
   const r=rollOnce(effL());
   const gain=Math.max(1,Math.round(Math.pow(r.odds,0.7)*expMult()));
   const p={odds:r.odds,gain:gain,sq:r.sq.map(s=>s.m?[s.z,s.n,s.m]:[s.z,s.n]),bonus:r.bonus,hw:r.hw,hx:r.hx};
@@ -2349,12 +2354,18 @@ function fxDraw(ct){
   g.restore();
 }
 
-function playRebirthCut(n,preview,after){
+function playRebirthCut(n,preview,after,trb){
   const sq=[]; for(let i=0;i<6;i++) sq.push([1,1]);
-  playCutscene({odds:1,gain:0,sq:sq,bonus:[],hw:[],hx:[]},[],'rebirth',preview,{rb:n,after:after});
+  playCutscene({odds:1,gain:0,sq:sq,bonus:[],hw:[],hx:[]},[],'rebirth',preview,{rb:trb?10:n,after:after,trb:!!trb});
+}
+/* skip: stop the scene and go straight back to the game. Rewards were already given before the scene began. */
+function skipCut(){
+  if(!cutOpen) return;
+  clearCutTimers(); cancelAnimationFrame(cutRaf); stopAmb(); stopScore();
+  cutDone=true; closeCut();
 }
 function playCutscene(p,outs,kind,preview,extra){
-  busy=true; cutOpen=true; cutDone=false; cutCtx={p:p,outs:outs,kind:kind,preview:!!preview,rb:extra&&extra.rb,after:extra&&extra.after};
+  busy=true; cutOpen=true; cutDone=false; cutCtx={p:p,outs:outs,kind:kind,preview:!!preview,rb:extra&&extra.rb,after:extra&&extra.after,trb:!!(extra&&extra.trb)}; $('cutSkip').hidden=false;
   clearTimeout(timer); clearCutTimers(); cancelAnimationFrame(cutRaf); if(AC) unlock();
   const cut=$('cut'), ti=tierIdx(p.odds,RT), K=CUT_KIND[kind];
   cut.classList.remove('arrived','k-planetary','k-star','k-impact','k-system','k-blackhole','k-beyond','k-universe','k-multiverse','k-omniverse','k-absolute','k-one','k-determination','k-rebirth','k-secret'); cut.classList.add('k-'+kind);
@@ -2366,7 +2377,7 @@ function playCutscene(p,outs,kind,preview,extra){
   $('cutTitle').textContent=K.first;
   $('cutSub').textContent='';
   $('cutOk').hidden=true;
-  document.querySelector('.wrap').inert=true;
+  document.querySelector('.wrap').inert=true; document.querySelector('.bar').inert=true;
   cut.hidden=false;
   const reduce=!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   const rnd=()=>SYM[Math.floor(Math.random()*N)];
@@ -2480,9 +2491,17 @@ function finishCut(){
   const p=cutCtx.p, outs=cutCtx.outs, kind=cutCtx.kind, og={};
   if(kind==='rebirth'){
     const n=cutCtx.rb||1;
+    if(cutCtx.trb){
+      $('cutTitle').textContent='TRUE REBIRTH';
+      $('cutSub').textContent=(cutCtx.preview?'Preview only. ':'')+'Ten lives become one. EXP ×'+TRB_EXP+' and +'+TRB_LUCK+' luck for good. Determination stays at its strongest.';
+      $('cutOk').hidden=false; $('cutSkip').hidden=true; $('cutOk').focus(); sndWin('determination');
+      let left=10; const okb=$('cutOk'); okb.textContent='Continue ('+left+')';
+      cutCd=setInterval(()=>{ left--; if(left<=0){ clearInterval(cutCd); cutCd=null; closeCut(); } else okb.textContent='Continue ('+left+')'; },1000);
+      return;
+    }
     $('cutTitle').textContent='REBIRTH '+n;
     $('cutSub').textContent=(cutCtx.preview?'Preview only. ':'')+'Stay determined. Luck +'+(0.5*n).toFixed(1)+', EXP ×'+(1+0.5*n).toFixed(1)+', Determination chance '+pctOf(detChance(n))+' a roll.';
-    $('cutOk').hidden=false; $('cutOk').focus(); sndWin('determination');
+    $('cutOk').hidden=false; $('cutSkip').hidden=true; $('cutOk').focus(); sndWin('determination');
     let left=10; const okb=$('cutOk'); okb.textContent='Continue ('+left+')';
     cutCd=setInterval(()=>{ left--; if(left<=0){ clearInterval(cutCd); cutCd=null; closeCut(); } else okb.textContent='Continue ('+left+')'; },1000);
     return;
@@ -2492,7 +2511,7 @@ function finishCut(){
   $('cutCard').classList.add('win');
   $('cutTitle').textContent=(kind==='one')?'THE ONE BEFORE ALL':Object.keys(og).map(k=>k+(og[k]>1?' x'+og[k]:'')).join(', ');
   $('cutSub').textContent=p.sq.map(s=>SYM[s[0]-1]+' №'+s[1]).join('  ·  ')+(cutCtx.preview?'. Preview only. Nothing is awarded.':('. +'+fmt(p.gain)+' EXP.'+((S.autoOn&&S.up.auto>0)?' Auto-roll resumes when you continue or after 10 seconds.':'')));
-  $('cutOk').hidden=false; $('cutOk').focus();
+  $('cutOk').hidden=false; $('cutSkip').hidden=true; $('cutOk').focus();
   sndWin(kind);
   let left=10; const okb=$('cutOk'); okb.textContent='Continue ('+left+')';
   cutCd=setInterval(()=>{
@@ -2506,7 +2525,7 @@ function closeCut(){
   clearCutTimers(); cancelAnimationFrame(cutRaf); stopAmb(); stopScore();
   cutOpen=false; cutDone=false;
   $('cut').hidden=true;
-  document.querySelector('.wrap').inert=false;
+  document.querySelector('.wrap').inert=false; document.querySelector('.bar').inert=false;
   busy=false; schedule();
   try{ $('rollBtn').focus(); }catch(e){}
   const af=cutCtx&&cutCtx.after; cutCtx=null; if(af) af();
@@ -2525,7 +2544,7 @@ function initOwner(){
   const tiles=$('ownTiles'); tiles.innerHTML='';
   for(let i=0;i<6;i++){ const d=document.createElement('div'); d.className='own-tile';
     d.innerHTML='<select class="te" aria-label="Tile '+(i+1)+' element">'+elOpts()+'</select><select class="tm" aria-label="Tile '+(i+1)+' mutation">'+muOpts(true)+'</select>'; tiles.appendChild(d); }
-  const FIELDS=[['exp','EXP'],['life','Lifetime EXP'],['rolls','Rolls'],['rebirths','Rebirths (up to 1 billion or inf)'],['luck','Lucky isotopes (up to 1 billion or inf)'],['speed','Quick hands (up to 1 billion or inf)'],['auto','Auto-roller (0 or 1)'],['shards','Shards']];
+  const FIELDS=[['exp','EXP'],['level','Level (1 to 19)'],['trb','True rebirths (players max 1)'],['rolls','Rolls'],['rebirths','Rebirths (up to 1 billion or inf)'],['luck','Lucky isotopes (up to 1 billion or inf)'],['speed','Quick hands (up to 1 billion or inf)'],['auto','Auto-roller (0 or 1)'],['shards','Shards']];
   const st=$('ownStats'); st.innerHTML=FIELDS.map(f=>'<label class="own-l">'+f[1]+'<input data-f="'+f[0]+'" type="text" autocomplete="off" spellcheck="false" inputmode="decimal" placeholder="number or inf"></label>').join('');
   const set=o=>{ pn.hidden=!o; msg.textContent=''; };
   btn.addEventListener('click',()=>set(pn.hidden));
@@ -2541,7 +2560,7 @@ function initOwner(){
   const run=async(fn)=>{ if(rolling||busy){ msg.textContent='Wait for the current roll or cutscene to finish.'; return; } rolling=true; msg.textContent='Working…'; clearTimeout(timer);
     try{ await fn(); rolling=false; }catch(e){ rolling=false; msg.textContent=e.message||'Could not reach the server.'; schedule(); } };
   const fmtStat=v=>(typeof v==='number'?(v>=1e6?v.toExponential(3):String(Math.round(v*100)/100)):'');
-  const showStats=(s,name)=>{ if(!s) return; $('ownNow').textContent='Editing: '+name+' · EXP '+fmtStat(s.exp)+' · rolls '+fmtStat(s.rolls)+' · rebirths '+s.rebirths+' · shards '+fmtStat(s.shards||0)+' · luck '+s.luck+(s.pending?' · '+s.pending+' gift roll'+(s.pending>1?'s':'')+' waiting':''); };
+  const showStats=(s,name)=>{ if(!s) return; $('ownNow').textContent='Editing: '+name+' · EXP '+fmtStat(s.exp)+' · rolls '+fmtStat(s.rolls)+' · level '+(s.level||1)+' · rebirths '+s.rebirths+' · true rebirths '+(s.trb||0)+' · shards '+fmtStat(s.shards||0)+' · luck '+s.luck+(s.pending?' · '+s.pending+' gift roll'+(s.pending>1?'s':'')+' waiting':''); };
   const labels=()=>{ const o=!!target; $('ownRoll').textContent=o?'Send as gift roll':'Roll it'; $('ownRollH').textContent=o?'Gift roll':'Custom roll';
     $('ownRollInfo').textContent=o?'Choose all six tiles. It waits for the player, even offline. Their very next roll is this one, with a note that it is a gift. Nothing is shown to them before then.':'Choose all six tiles, with any element and any mutation. It counts as a real roll: EXP, Index, best roll and the cutscene.';
     $('ownGo').textContent=o?'Give to player':'Give'; $('ownSave').textContent=o?'Save their stats':'Save stats'; };
@@ -2590,6 +2609,7 @@ function previewCut(kind){
   if(busy) return;
   if(window.__closeIdx) window.__closeIdx();
   if(kind==='rebirth'){ playRebirthCut(Math.min(RB_MAX,S.rebirths+1),true,null); return; }
+  if(kind==='truerebirth'){ playRebirthCut(10,true,null,true); return; }
   const sq=[];
   for(let i=0;i<6;i++) sq.push({z:pickZ(0),n:1+Math.floor(Math.random()*N),m:0});
   const pl=kind==='planetary'?[1]:kind==='star'?[2]:kind==='system'?[4,4]:kind==='blackhole'?[5]:kind==='beyond'?[6,6,6]:kind==='universe'?[11,6,6]:kind==='multiverse'?[7,7,6]:kind==='omniverse'?[8,8,6]:kind==='secret'?[13,13,13,13,13,13]:kind==='determination'?[12,12,12]:kind==='absolute'?[9,9,6]:kind==='one'?[10,10,10,10,10,10]:[3,3];
@@ -2600,7 +2620,7 @@ function previewCut(kind){
 }
 
 /* rebirth */
-let rbArmed=false, rbT=null;
+let rbArmed=false, rbT=null, trbArmed=false, trbT=null;
 function renderRebirth(){
   const r=S.rebirths, max=r>=RB_MAX, cost=max?0:rbCost(r), b=$('rbBtn');
   $('rbCount').textContent=r>RB_MAX?String(r):r+' / '+RB_MAX;
@@ -2611,10 +2631,18 @@ function renderRebirth(){
   b.disabled=max||S.exp<cost;
   if(b.disabled) rbArmed=false;
   if(!rbArmed) b.textContent=max?'Fully reborn':('Rebirth '+(r+1));
-  $('rbNext').textContent=r>=3?'The Auto-roller is free and stays on.':(r===2?'Your next rebirth gives a free Auto-roller.':'Rebirth 3 gives a free Auto-roller.');
+  const t=trbN(), tb=$('trbBtn');
+  if(tb){
+    $('trbBadge').textContent=t>TRB_MAX?(t+' (owner gift)'):(t+' / '+TRB_MAX);
+    $('trbProg').value=Math.min(10,r);
+    const can=t<TRB_MAX&&r>=RB_MAX;
+    tb.disabled=!can; if(!can) trbArmed=false;
+    if(!trbArmed) tb.textContent=t>=TRB_MAX?'True Rebirth earned':(r>=RB_MAX?'True Rebirth':'Needs 10 rebirths ('+Math.min(r,10)+' / 10)');
+  }
+  $('rbNext').textContent=(r>=3||trbN()>0)?'The Auto-roller is free and stays on.':(r===2?'Your next rebirth gives a free Auto-roller.':'Rebirth 3 gives a free Auto-roller.');
 }
 function afterRebirth(){
-  if(S.rebirths>=3){ S.up.auto=1; S.autoOn=true; }
+  if(S.rebirths>=3||trbN()>0){ S.up.auto=1; S.autoOn=true; }
   paintAll(); renderWallet(); renderLists(); renderDisc(); updateUps(); syncAuto(); renderRebirth();
   save(); markDirty();
   playRebirthCut(S.rebirths,false,()=>{ doRoll(false); schedule(); save(); markDirty(); });
@@ -2626,15 +2654,50 @@ function doRebirth(){
     PRAuth.call('rebirth').then(res=>{ applyRemote(res); rolling=false; afterRebirth(); },e=>{ rolling=false; netNote(e.message); schedule(); });
     return;
   }
-  const keep={rolls:S.rolls,found:S.found,words:S.words,rx:S.rx,top:S.top,recent:S.recent,secs:S.secs,dets:S.dets,tot:S.tot,life:S.life,best:S.best,outers:S.outers,stars:S.stars,impacts:S.impacts,systems:S.systems,holes:S.holes,beyonds:S.beyonds,multis:S.multis,unis:S.unis,omnis:S.omnis,absolutes:S.absolutes,ones:S.ones};
+  const keep={rolls:S.rolls,found:S.found,words:S.words,rx:S.rx,top:S.top,recent:S.recent,secs:S.secs,dets:S.dets,tot:S.tot,life:S.life,best:S.best,outers:S.outers,stars:S.stars,impacts:S.impacts,systems:S.systems,holes:S.holes,beyonds:S.beyonds,multis:S.multis,unis:S.unis,omnis:S.omnis,absolutes:S.absolutes,ones:S.ones,trb:S.trb||0};
   clearTimeout(timer);
   Object.assign(S,fresh());
   S.rolls=keep.rolls; S.found=keep.found; S.words=keep.words; S.rx=keep.rx; S.top=keep.top; S.recent=keep.recent;
-  S.tot=keep.tot; S.life=keep.life; S.best=keep.best; S.outers=keep.outers; S.stars=keep.stars; S.impacts=keep.impacts; S.systems=keep.systems; S.holes=keep.holes; S.beyonds=keep.beyonds; S.multis=keep.multis; S.unis=keep.unis; S.omnis=keep.omnis; S.absolutes=keep.absolutes; S.ones=keep.ones; S.dets=keep.dets; S.secs=keep.secs; S.rebirths=r+1;
-  if(S.rebirths>=3){ S.up.auto=1; S.autoOn=true; }
+  S.tot=keep.tot; S.life=keep.life; S.best=keep.best; S.outers=keep.outers; S.stars=keep.stars; S.impacts=keep.impacts; S.systems=keep.systems; S.holes=keep.holes; S.beyonds=keep.beyonds; S.multis=keep.multis; S.unis=keep.unis; S.omnis=keep.omnis; S.absolutes=keep.absolutes; S.ones=keep.ones; S.dets=keep.dets; S.secs=keep.secs; S.rebirths=r+1; S.trb=keep.trb;
+  if(S.rebirths>=3||trbN()>0){ S.up.auto=1; S.autoOn=true; }
   paintAll(); renderWallet(); renderLists(); renderDisc(); updateUps(); syncAuto();
   save(); markDirty();
   playRebirthCut(S.rebirths,false,()=>{ doRoll(false); schedule(); save(); markDirty(); });
+}
+
+function doTrueRebirth(){
+  if(trbN()>=TRB_MAX||S.rebirths<RB_MAX) return;
+  const done=()=>{ S.up.auto=1; S.autoOn=true;
+    paintAll(); renderWallet(); renderLists(); renderDisc(); updateUps(); syncAuto(); renderRebirth(); save(); markDirty();
+    playRebirthCut(10,false,()=>{ doRoll(false); schedule(); save(); markDirty(); },true); };
+  if(REMOTE()){
+    if(rolling) return; rolling=true; clearTimeout(timer);
+    PRAuth.call('truerebirth').then(res=>{ applyRemote(res); rolling=false; done(); },e=>{ rolling=false; netNote(e.message); schedule(); });
+    return;
+  }
+  clearTimeout(timer);
+  const keep={}; for(const k of ['rolls','found','words','rx','top','recent','secs','dets','tot','life','best','outers','stars','impacts','systems','holes','beyonds','multis','unis','omnis','absolutes','ones']) keep[k]=S[k];
+  const t=trbN();
+  Object.assign(S,fresh(),keep); S.rebirths=0; S.trb=t+1;
+  done();
+}
+/* page chrome: settings menu and progress tabs */
+function initChrome(){
+  const mb=$('menuBtn'), mp=$('menuPop');
+  const setM=o=>{ mp.hidden=!o; mb.setAttribute('aria-expanded',String(o)); };
+  mb.addEventListener('click',e=>{ e.stopPropagation(); setM(mp.hidden); });
+  document.addEventListener('click',e=>{ if(!mp.hidden&&!mp.contains(e.target)&&e.target!==mb) setM(false); });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&!mp.hidden) setM(false); });
+  const tabs=[...document.querySelectorAll('.tab')];
+  const pick=k=>{ tabs.forEach(t=>t.setAttribute('aria-selected',String(t.dataset.tab===k))); document.querySelectorAll('.pane-t').forEach(p=>{ p.hidden=p.dataset.pane!==k; }); try{localStorage.setItem('periodic-roll-tab',k);}catch(e){} };
+  tabs.forEach(t=>t.addEventListener('click',()=>pick(t.dataset.tab)));
+  let k0=null; try{k0=localStorage.getItem('periodic-roll-tab');}catch(e){} if(k0&&tabs.some(t=>t.dataset.tab===k0)) pick(k0);
+  $('cutSkip').addEventListener('click',skipCut);
+  $('trbBtn').addEventListener('click',()=>{
+    if(trbN()>=TRB_MAX||S.rebirths<RB_MAX) return;
+    if(!trbArmed){ trbArmed=true; $('trbBtn').textContent='Tap again for True Rebirth'; trbT=setTimeout(()=>{trbArmed=false;renderRebirth();},5000); return; }
+    clearTimeout(trbT); trbArmed=false; doTrueRebirth();
+  });
 }
 
 /* boot */
@@ -2658,7 +2721,7 @@ function init(){
   $('idxClose').addEventListener('click',()=>setIdx(false));
   ip.addEventListener('click',e=>{ if(e.target===ip) setIdx(false); });
   document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&!ip.hidden) setIdx(false); });
-  initOwner(); initQuests();
+  initOwner(); initQuests(); initChrome();
   $('rollBtn').addEventListener('click',()=>doRoll(false));
   $('autoChk').addEventListener('change',e=>{S.autoOn=e.target.checked;schedule();save(); if(REMOTE()) PRAuth.call('auto',{on:S.autoOn}).catch(()=>{});});
   document.addEventListener('keydown',e=>{
@@ -2709,7 +2772,7 @@ function init(){
   });
   document.addEventListener('keydown',e=>{
     if(!cutOpen||e.key!=='Escape') return;
-    if(cutDone) closeCut();
+    if(cutDone) closeCut(); else skipCut();
   });
   renderRebirth();
   initPerf(); initTheme();
@@ -2731,4 +2794,5 @@ try{
   if(window.claude&&window.claude.hot&&window.claude.hot.ready) window.claude.hot.ready(start);
   else{ const d=window.claude&&window.claude.hot?window.claude.hot.data:null; if(window.PRAuth&&window.PRAuth.enabled) window.PRAuth.boot().then(()=>start(d),()=>start(d)); else start(d); }
 }catch(e){try{console.error(e&&e.stack?e.stack:e);}catch(_){} init();}
+window.PRGame={S:S,SYM:SYM,NAME:NAME,MUTN:MUTN,mutMap:mutMap,busy:()=>busy};
 })();

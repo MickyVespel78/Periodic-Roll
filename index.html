@@ -18,29 +18,50 @@
 </head>
 <body>
 
-<div class="wrap">
-  <header class="top">
-    <div class="brand">
-      <h1>Periodic<span>Roll</span></h1>
-      <p>Roll six tiles. Each one is an element with a number. Matches, words, names, compounds and number joins all make a roll rarer and pay more EXP.</p>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="gShard" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7DF0E6"/><stop offset=".55" stop-color="#8F86FF"/><stop offset="1" stop-color="#FF6AD5"/></linearGradient>
+    <symbol id="i-shard" viewBox="0 0 24 24"><path d="M12 1.5 19.5 8 12 22.5 4.5 8Z" fill="url(#gShard)"/><path d="M12 1.5 15 8 12 22.5 9 8Z" fill="#fff" opacity=".35"/><path d="M4.5 8h15" stroke="#fff" stroke-opacity=".6" stroke-width="1"/></symbol>
+    <symbol id="i-atom" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6"><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(120 12 12)"/></g><circle cx="12" cy="12" r="2.2" fill="currentColor"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 4.5A1.5 1.5 0 0 1 5.5 3H19v16H5.5A1.5 1.5 0 0 0 4 20.5Zm0 16A1.5 1.5 0 0 0 5.5 22H19v-3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 7h7M8 10.5h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+    <symbol id="i-beast" viewBox="0 0 24 24"><path d="M5 9 3 3l5 3.5M19 9l2-6-5 3.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M4.5 13a7.5 7.5 0 0 1 15 0c0 4-3.4 8-7.5 8s-7.5-4-7.5-8Z" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="9.3" cy="13" r="1.4" fill="currentColor"/><circle cx="14.7" cy="13" r="1.4" fill="currentColor"/><path d="M10 17.2h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+    <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4m0 0h11l-2 4 2 4H5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/></symbol>
+    <symbol id="i-dice" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="4" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="8.5" cy="8.5" r="1.4" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/></symbol>
+    <symbol id="i-crown" viewBox="0 0 24 24"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+  </defs>
+</svg>
+
+<header class="bar">
+  <div class="bar-in">
+    <a class="logo" href="#" aria-label="Periodic Roll"><span class="logo-mark"><svg><use href="#i-atom"/></svg></span><span class="logo-txt">Periodic<b>Roll</b></span></a>
+    <div class="purse" aria-label="Your currencies">
+      <span class="pill" title="EXP to spend"><span class="pk">EXP</span><b id="exp">0</b></span>
+      <span class="pill lvl" title="Level"><span class="pk">LV</span><b id="lvl">1</b></span>
+      <span class="pill shard" id="shardBox" hidden title="Shards"><svg class="shard-ico"><use href="#i-shard"/></svg><b id="shards">0</b></span>
     </div>
     <div class="acct" id="acctBar"></div>
-    <dl class="wallet">
-      <div><dt>EXP</dt><dd id="exp">0</dd></div>
-      <div><dt>Level</dt><dd id="lvl">1</dd></div>
-      <div><dt>Rolls</dt><dd id="rolls">0</dd></div>
-      <div><dt>Elements found</dt><dd id="found">0 / 118</dd></div>
-      <div><dt>Best roll</dt><dd id="best">none yet</dd></div>
-      <div><dt>Luck</dt><dd id="luck">0.0</dd></div>
-      <div><dt>EXP bonus</dt><dd id="xm">&times;1.0</dd></div>
-      <div id="shardBox" hidden><dt>Shards</dt><dd id="shards">0</dd></div>
-    </dl>
-    <p class="msline" id="msLine"></p>
-    <div class="toolbar"><button type="button" class="gbtn" id="rarBtn" aria-expanded="false" aria-controls="rarPanel">Rarity guide</button><button type="button" class="gbtn" id="idxBtn" aria-expanded="false" aria-controls="idxPanel">Index</button><button type="button" class="gbtn" id="qBtn" aria-expanded="false" aria-controls="qPanel">Quests<span class="qdot" id="qDot" hidden></span></button><button type="button" class="gbtn" id="ownBtn" hidden>Owner tools</button><button type="button" class="gbtn" id="themeBtn">Theme: auto</button><button type="button" class="gbtn" id="perfBtn" aria-pressed="false">Performance mode: off</button></div>
-  </header>
+    <div class="menu">
+      <button type="button" class="ibtn" id="menuBtn" aria-expanded="false" aria-controls="menuPop" aria-label="Settings"><svg><use href="#i-gear"/></svg></button>
+      <div class="menu-pop" id="menuPop" hidden>
+        <button type="button" class="mi" id="themeBtn">Theme: auto</button>
+        <button type="button" class="mi" id="perfBtn" aria-pressed="false">Performance mode: off</button>
+        <button type="button" class="mi" id="resetBtn">Reset progress</button>
+      </div>
+    </div>
+  </div>
+  <nav class="dock" aria-label="Game menus">
+    <button type="button" class="dk" id="idxBtn" aria-expanded="false" aria-controls="idxPanel"><svg><use href="#i-book"/></svg>Index</button>
+    <button type="button" class="dk" id="atxBtn" aria-expanded="false" aria-controls="atxPanel"><svg><use href="#i-beast"/></svg>Atomix<em class="beta">beta</em></button>
+    <button type="button" class="dk" id="qBtn" aria-expanded="false" aria-controls="qPanel"><svg><use href="#i-flag"/></svg>Quests<span class="qdot" id="qDot" hidden></span></button>
+    <button type="button" class="dk" id="rarBtn" aria-expanded="false" aria-controls="rarPanel"><svg><use href="#i-dice"/></svg>Rarity guide</button>
+    <button type="button" class="dk own" id="ownBtn" hidden><svg><use href="#i-crown"/></svg>Owner</button>
+  </nav>
+</header>
 
+<div class="wrap">
   <div class="layout">
-  <section class="bench s-bench" aria-labelledby="h-tray">
+  <section class="bench s-bench card" aria-labelledby="h-tray">
     <h2 class="sr" id="h-tray">Rolling tray</h2>
     <div id="tray" class="tray" role="group" aria-label="Six rolled tiles"></div>
     <p class="legend">Corner number is the atomic number. The pill is the rolled number; when they match it is a Resonance. <i style="background:var(--hw)"></i>Word or name. <i style="background:var(--hx)"></i>Compound.</p>
@@ -54,64 +75,97 @@
       </div>
       <div class="controls">
         <button id="rollBtn" class="roll" type="button">Roll <kbd>Space</kbd></button>
-        <label class="auto locked" id="autoBox"><input type="checkbox" id="autoChk" disabled><span>Auto-roll<small id="autoInfo">Buy the Auto-roller below</small></span></label>
+        <label class="auto locked" id="autoBox"><input type="checkbox" id="autoChk" disabled><span>Auto-roll<small id="autoInfo">Buy the Auto-roller</small></span></label>
         <button type="button" class="snd" id="sndBtn" aria-pressed="true">Sound: on</button>
       </div>
     </div>
   </section>
 
-  <section class="s-up" aria-labelledby="h-up">
-    <div class="sec-head"><h2 id="h-up">Bench upgrades</h2><p class="info">Spend EXP. Rarer rolls pay far more.</p></div>
-    <div class="upgrid" id="upgrid"></div>
-  </section>
-
-  <section class="s-rb" aria-labelledby="h-rb">
-    <div class="sec-head"><h2 id="h-rb">Rebirth</h2><p class="info" id="rbNext"></p></div>
-    <div class="rb">
-      <dl class="rbstats">
-        <div><dt>Rebirths</dt><dd id="rbCount">0 / 10</dd></div>
-        <div><dt>Luck from rebirths</dt><dd id="rbLuck">+0.0</dd></div>
-        <div><dt>EXP bonus</dt><dd id="rbExp">&times;1.0</dd></div>
-        <div><dt>Next rebirth costs</dt><dd id="rbCost">0</dd></div>
+  <aside class="s-side">
+    <section class="card statcard" aria-labelledby="h-stats">
+      <h2 class="mini-h" id="h-stats">Your lab</h2>
+      <dl class="stats">
+        <div><dt>Rolls</dt><dd id="rolls">0</dd></div>
+        <div><dt>Elements</dt><dd id="found">0 / 118</dd></div>
+        <div><dt>Best roll</dt><dd id="best">none yet</dd></div>
+        <div><dt>Luck</dt><dd id="luck">0.0</dd></div>
+        <div><dt>EXP bonus</dt><dd id="xm">&times;1.0</dd></div>
+        <div><dt>True rebirth</dt><dd id="trbStat">0</dd></div>
       </dl>
-      <progress id="rbProg" max="1" value="0" aria-label="EXP toward the next rebirth"></progress>
-      <p class="info">A rebirth resets your EXP and all upgrades, including Lucky isotopes. It keeps your element ledger, discoveries, words, reactions, lifetime EXP, best roll and mutation finds. Every rebirth adds 0.5 luck and 0.5 EXP bonus for good.</p>
-      <button type="button" id="rbBtn" class="buy" disabled>Rebirth 1</button>
+      <p class="msline" id="msLine"></p>
+    </section>
+    <section class="s-lb lbcard card" aria-labelledby="h-lb">
+      <div class="sec-head"><h2 id="h-lb">Worldwide leaderboards</h2></div>
+      <p class="info" id="lbNote" aria-live="polite" style="margin-bottom:12px">Connecting to the leaderboard…</p>
+      <div class="lbpair">
+        <div><h3 class="lbh">Top EXP <small>lifetime</small></h3><ol class="lb" id="lbList"></ol></div>
+        <div><h3 class="lbh">Best roll <small>best find</small></h3><ol class="lb" id="lbList2"></ol></div>
+      </div>
+    </section>
+  </aside>
+
+  <section class="s-tabs" aria-label="Progress">
+    <div class="tabs" role="tablist" aria-label="Progress sections">
+      <button type="button" role="tab" class="tab" data-tab="up" aria-selected="true">Upgrades</button>
+      <button type="button" role="tab" class="tab" data-tab="rb" aria-selected="false">Rebirth</button>
+      <button type="button" role="tab" class="tab" data-tab="dex" aria-selected="false">Ledger</button>
+      <button type="button" role="tab" class="tab" data-tab="hist" aria-selected="false">History</button>
+    </div>
+
+    <div class="pane-t" data-pane="up" role="tabpanel">
+      <div class="sec-head"><h2 id="h-up">Bench upgrades</h2><p class="info">Spend EXP. Rarer rolls pay far more.</p></div>
+      <div class="upgrid" id="upgrid"></div>
+    </div>
+
+    <div class="pane-t" data-pane="rb" role="tabpanel" hidden>
+      <div class="rbpair">
+        <div class="rb card">
+          <div class="sec-head"><h2 id="h-rb">Rebirth</h2><p class="info" id="rbNext"></p></div>
+          <dl class="rbstats">
+            <div><dt>Rebirths</dt><dd id="rbCount">0 / 10</dd></div>
+            <div><dt>Luck from rebirths</dt><dd id="rbLuck">+0.0</dd></div>
+            <div><dt>EXP bonus</dt><dd id="rbExp">&times;1.0</dd></div>
+            <div><dt>Next costs</dt><dd id="rbCost">0</dd></div>
+          </dl>
+          <progress id="rbProg" max="1" value="0" aria-label="EXP toward the next rebirth"></progress>
+          <p class="info">Resets your EXP and upgrades, including Lucky isotopes. Keeps the ledger, discoveries, lifetime EXP, best roll, mutation finds and shards. Each rebirth adds 0.5 luck and 0.5 EXP bonus for good.</p>
+          <button type="button" id="rbBtn" class="buy" disabled>Rebirth 1</button>
+        </div>
+        <div class="trb card">
+          <div class="sec-head"><h2>True Rebirth</h2><span class="trb-badge" id="trbBadge">0 / 1</span></div>
+          <p class="info">Unlocks at 10 rebirths. It turns your 10 rebirths into one True Rebirth: rebirths go back to 0, and you get <b>EXP &times;3</b> and <b>+3 luck</b> for good. Determination stays at its Rebirth 10 chance. Shards, the ledger, discoveries and the Auto-roller are kept. One True Rebirth is the most anyone can earn.</p>
+          <progress id="trbProg" max="10" value="0" aria-label="Rebirths toward a True Rebirth"></progress>
+          <button type="button" id="trbBtn" class="buy trb-go" disabled>Needs 10 rebirths</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="pane-t" data-pane="dex" role="tabpanel" hidden>
+      <div class="sec-head"><h2 id="h-dex">Element ledger</h2><p class="info" id="dexInfo" aria-live="polite">Select an element to see its odds.</p></div>
+      <div class="tablewrap"><div class="ptable" id="ptable"></div></div>
+    </div>
+
+    <div class="pane-t" data-pane="hist" role="tabpanel" hidden>
+      <div class="two">
+        <section aria-labelledby="h-top"><div class="sec-head"><h2 id="h-top">Best finds</h2></div><ol class="finds" id="topList"></ol></section>
+        <section aria-labelledby="h-rec"><div class="sec-head"><h2 id="h-rec">Recent rolls</h2></div><ol class="finds" id="recList"></ol></section>
+      </div>
     </div>
   </section>
+  </div>
 
-  <section class="s-lb lbcard" aria-labelledby="h-lb">
-    <div class="sec-head"><h2 id="h-lb">Worldwide leaderboards</h2></div>
-    <p class="info" id="lbNote" aria-live="polite" style="margin-bottom:12px">Connecting to the leaderboard…</p>
-    <div class="lbpair">
-      <div><h3 class="lbh">Top EXP <small>lifetime</small></h3><ol class="lb" id="lbList"></ol></div>
-      <div><h3 class="lbh">Best roll <small>rarest find</small></h3><ol class="lb" id="lbList2"></ol></div>
+  <div class="foot"><span>Account rolls, rebirths and quests are checked by the server.</span></div>
+</div>
+
+<div id="atxPanel" class="rar" hidden role="dialog" aria-modal="true" aria-labelledby="atxTitle">
+  <div class="rar-card atx-card">
+    <div class="sec-head"><h2 id="atxTitle">Atomix <em class="beta">beta</em></h2><button type="button" class="gbtn" id="atxClose">Close</button></div>
+    <p class="info">Every element has its own Atomix. Get any mutation on an element to unlock its Atomix and view it. Viewing only for now: battles come later.</p>
+    <div class="atx-filter" role="group" aria-label="Filter Atomix"><button type="button" class="gbtn on" data-f="all">All</button><button type="button" class="gbtn" data-f="got">Unlocked</button><span class="info" id="atxCount"></span></div>
+    <div class="atx-body">
+      <div class="atx-grid" id="atxGrid"></div>
+      <div class="atx-view" id="atxView"></div>
     </div>
-  </section>
-
-
-  <section class="s-dex" aria-labelledby="h-dex">
-    <div class="sec-head"><h2 id="h-dex">Element ledger</h2><p class="info" id="dexInfo" aria-live="polite">Select an element to see its odds.</p></div>
-    <div class="tablewrap"><div class="ptable" id="ptable"></div></div>
-  </section>
-
-  <div class="two">
-    <section aria-labelledby="h-top">
-      <div class="sec-head"><h2 id="h-top">Best finds</h2></div>
-      <ol class="finds" id="topList"></ol>
-    </section>
-    <section aria-labelledby="h-rec">
-      <div class="sec-head"><h2 id="h-rec">Recent rolls</h2></div>
-      <ol class="finds" id="recList"></ol>
-    </section>
-  </div>
-
-
-  </div>
-
-  <div class="foot">
-    <span>Progress saves in this browser. Leaderboard scores are checked by the server.</span>
-    <button class="reset" id="resetBtn" type="button">Reset progress</button>
   </div>
 </div>
 
@@ -134,6 +188,7 @@
         <ul class="dchips m" id="outList"></ul>
         <div class="pvrow" role="group" aria-label="Preview a mutation cutscene">
           <button type="button" class="pv" data-k="rebirth">Preview Rebirth</button>
+          <button type="button" class="pv" data-k="truerebirth">Preview True Rebirth</button>
           <button type="button" class="pv" data-k="planetary">Preview Planetary</button>
           <button type="button" class="pv" data-k="star">Preview Star</button>
           <button type="button" class="pv" data-k="impact">Preview Impact</button>
@@ -157,7 +212,7 @@
 <div id="qPanel" class="rar" hidden role="dialog" aria-modal="true" aria-labelledby="qTitle">
   <div class="rar-card" style="max-width:720px">
     <div class="sec-head"><h2 id="qTitle">Quests and achievements</h2><button type="button" class="gbtn" id="qClose">Close</button></div>
-    <p class="info">Quests pay a small amount of EXP when you press Claim. Achievements unlock by themselves and pay shards (15 to 50 each). Shards have no use yet.</p>
+    <p class="info">Quests pay EXP (100 million up to 1 trillion) when you press Claim. Achievements unlock by themselves and pay <svg class="shard-ico sm" aria-hidden="true"><use href="#i-shard"/></svg> shards (15 to 50 each). Shards have no use yet, and rebirths never reset them.</p>
     <p class="acct-msg" id="qMsg" aria-live="polite"></p>
     <div class="q-tabs" role="tablist"><button type="button" class="gbtn" data-t="d">Daily</button><button type="button" class="gbtn" data-t="w">Weekly</button><button type="button" class="gbtn" data-t="a">All time</button><button type="button" class="gbtn" data-t="ach">Achievements</button></div>
     <div id="qBody"></div>
@@ -206,6 +261,7 @@
 <div id="flash" class="flash" aria-hidden="true"></div>
 
 <div id="cut" class="cut" role="dialog" aria-modal="true" aria-labelledby="cutTitle" hidden>
+  <button type="button" id="cutSkip" class="cbtn skip">Skip</button>
   <canvas id="stars" class="stars" aria-hidden="true"></canvas>
   <div class="planet" aria-hidden="true"></div>
   <div id="cutCard" class="cut-card">
@@ -237,5 +293,6 @@
 <script src="js/config.js"></script>
 <script src="js/accounts.js"></script>
 <script src="js/game.js"></script>
+<script src="js/atomix.js"></script>
 </body>
 </html>
