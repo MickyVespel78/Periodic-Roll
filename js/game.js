@@ -302,7 +302,7 @@ const DEFS=[
   {k:'luck',name:'Lucky isotopes',max:20,cost:l=>Math.round(150*Math.pow(1.9,l)),desc:l=>l?('Rarer elements favoured, '+(l*0.4).toFixed(1)+'% forced resonance'):'Base element odds'}
 ];
 
-const fresh=()=>({exp:0,life:0,rolls:0,tot:0,up:{auto:0,speed:0,luck:0},autoOn:false,found:{},words:{},rx:{},best:null,top:[],recent:[],last:null,rebirths:0,trb:0,dets:{},secs:{},outers:{},stars:{},impacts:{},systems:{},holes:{},beyonds:{},multis:{},unis:{},omnis:{},absolutes:{},ones:{}});
+const fresh=()=>({exp:0,life:0,rolls:0,tot:0,up:{auto:0,speed:0,luck:0},autoOn:false,found:{},words:{},rx:{},best:null,top:[],recent:[],last:null,rebirths:0,trb:0,atx:{},dets:{},secs:{},outers:{},stars:{},impacts:{},systems:{},holes:{},beyonds:{},multis:{},unis:{},omnis:{},absolutes:{},ones:{}});
 const S=fresh();
 const mutMap=m=>m===1?S.outers:m===2?S.stars:m===3?S.impacts:m===4?S.systems:m===5?S.holes:m===6?S.beyonds:m===7?S.multis:m===11?S.unis:m===12?S.dets:m===13?S.secs:m===8?S.omnis:m===9?S.absolutes:S.ones;
 function merge(d){
@@ -2563,7 +2563,7 @@ function initOwner(){
   const showStats=(s,name)=>{ if(!s) return; $('ownNow').textContent='Editing: '+name+' · EXP '+fmtStat(s.exp)+' · rolls '+fmtStat(s.rolls)+' · level '+(s.level||1)+' · rebirths '+s.rebirths+' · true rebirths '+(s.trb||0)+' · shards '+fmtStat(s.shards||0)+' · luck '+s.luck+(s.pending?' · '+s.pending+' gift roll'+(s.pending>1?'s':'')+' waiting':''); };
   const labels=()=>{ const o=!!target; $('ownRoll').textContent=o?'Send as gift roll':'Roll it'; $('ownRollH').textContent=o?'Gift roll':'Custom roll';
     $('ownRollInfo').textContent=o?'Choose all six tiles. It waits for the player, even offline. Their very next roll is this one, with a note that it is a gift. Nothing is shown to them before then.':'Choose all six tiles, with any element and any mutation. It counts as a real roll: EXP, Index, best roll and the cutscene.';
-    $('ownGo').textContent=o?'Give to player':'Give'; $('ownSave').textContent=o?'Save their stats':'Save stats'; };
+    $('ownGo').textContent=o?'Give to player':'Give'; if($('ownAtx')) $('ownAtx').textContent=o?'Give Atomix to player':'Give Atomix'; $('ownSave').textContent=o?'Save their stats':'Save stats'; };
   const lookup=async()=>{ try{ const d=await call({action:'lookup'}); showStats(d.stats,d.me?'you':d.target); }catch(e){ msg.textContent=e.message; } };
   const chips=$('ownList');
   const paintChips=names=>{ chips.innerHTML=''; (names||[]).forEach(n=>{ const c=document.createElement('span'); c.className='own-chip'+(n.toLowerCase()===target.toLowerCase()?' on':'');
@@ -2579,6 +2579,13 @@ function initOwner(){
   $('ownTarget').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); choose($('ownTarget').value); } });
   $('ownMe').addEventListener('click',()=>choose(''));
   btn.addEventListener('click',()=>{ if(!pn.hidden){ loadList(); lookup(); } });
+  { const ae=$('ownAtxEl'), am=$('ownAtxMut'); if(ae&&am){ ae.innerHTML=elOpts(); am.innerHTML='<option value="0">Normal form</option>'+muOpts(false).replace(/Beyond Space/g,'Rift');
+    $('ownAtx').textContent=target?'Give Atomix to player':'Give Atomix';
+    $('ownAtx').addEventListener('click',()=>run(async()=>{
+      const z=+ae.value, m=+am.value; const d=await call({action:'giveatx',z,m});
+      if(target){ showStats(d.stats,d.target); msg.textContent='Gave the '+NAME[z-1]+' Atomix ('+(m?MUTN[m].replace('Beyond Space','Rift'):'Normal')+' form) to '+d.target+'. They see it in Atomix on their next roll or reload.'; return; }
+      applyRemote(d); repaint(); msg.textContent='The '+NAME[z-1]+' Atomix ('+(m?MUTN[m].replace('Beyond Space','Rift'):'Normal')+' form) is in your Atomix now.';
+    })); } }
   $('ownGo').addEventListener('click',()=>run(async()=>{
     const z=+$('ownEl').value, m=+$('ownMut').value;
     const d=await call({action:'give',z,m});
@@ -2654,10 +2661,10 @@ function doRebirth(){
     PRAuth.call('rebirth').then(res=>{ applyRemote(res); rolling=false; afterRebirth(); },e=>{ rolling=false; netNote(e.message); schedule(); });
     return;
   }
-  const keep={rolls:S.rolls,found:S.found,words:S.words,rx:S.rx,top:S.top,recent:S.recent,secs:S.secs,dets:S.dets,tot:S.tot,life:S.life,best:S.best,outers:S.outers,stars:S.stars,impacts:S.impacts,systems:S.systems,holes:S.holes,beyonds:S.beyonds,multis:S.multis,unis:S.unis,omnis:S.omnis,absolutes:S.absolutes,ones:S.ones,trb:S.trb||0};
+  const keep={atx:S.atx,rolls:S.rolls,found:S.found,words:S.words,rx:S.rx,top:S.top,recent:S.recent,secs:S.secs,dets:S.dets,tot:S.tot,life:S.life,best:S.best,outers:S.outers,stars:S.stars,impacts:S.impacts,systems:S.systems,holes:S.holes,beyonds:S.beyonds,multis:S.multis,unis:S.unis,omnis:S.omnis,absolutes:S.absolutes,ones:S.ones,trb:S.trb||0};
   clearTimeout(timer);
   Object.assign(S,fresh());
-  S.rolls=keep.rolls; S.found=keep.found; S.words=keep.words; S.rx=keep.rx; S.top=keep.top; S.recent=keep.recent;
+  S.atx=keep.atx||{}; S.rolls=keep.rolls; S.found=keep.found; S.words=keep.words; S.rx=keep.rx; S.top=keep.top; S.recent=keep.recent;
   S.tot=keep.tot; S.life=keep.life; S.best=keep.best; S.outers=keep.outers; S.stars=keep.stars; S.impacts=keep.impacts; S.systems=keep.systems; S.holes=keep.holes; S.beyonds=keep.beyonds; S.multis=keep.multis; S.unis=keep.unis; S.omnis=keep.omnis; S.absolutes=keep.absolutes; S.ones=keep.ones; S.dets=keep.dets; S.secs=keep.secs; S.rebirths=r+1; S.trb=keep.trb;
   if(S.rebirths>=3||trbN()>0){ S.up.auto=1; S.autoOn=true; }
   paintAll(); renderWallet(); renderLists(); renderDisc(); updateUps(); syncAuto();

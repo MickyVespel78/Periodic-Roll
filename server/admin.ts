@@ -104,6 +104,16 @@ Deno.serve(async (req) => {
 
     if (act === "lookup") return j({ target: tlabel, me: !other, stats: stats(D, await pendingCount(tuid)) });
 
+    if (act === "giveatx") {
+      const z = Math.floor(Number(body.z)), m = Math.floor(Number(body.m) || 0);
+      if (!(z >= 1 && z <= 118) || (m !== 0 && !MAPS[m])) return j({ error: "Bad Atomix or form." }, 400);
+      D.atx = (D.atx && typeof D.atx === "object") ? D.atx : {};
+      const cur: number[] = Array.isArray(D.atx[z]) ? D.atx[z] : [];
+      if (cur.indexOf(m) < 0) cur.push(m);
+      if (cur.indexOf(0) < 0) cur.unshift(0);
+      D.atx[z] = cur;
+      return done();
+    }
     if (act === "give") {
       const z = Math.floor(Number(body.z)), m = Math.floor(Number(body.m)), n = Math.min(50, Math.max(1, Math.floor(Number(body.n) || 1)));
       if (!(z >= 1 && z <= 118) || !MAPS[m]) return j({ error: "Bad element or mutation." }, 400);

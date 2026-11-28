@@ -833,3 +833,48 @@ body{padding-top:0}
 .dk[hidden],.qdot[hidden],.ibtn[hidden]{display:none!important}
 @media (max-width:700px){.logo{margin-right:auto}}
 #cut{z-index:900}
+
+/* ================= Atomix 3D viewer ================= */
+@media (min-width:860px){.atx-body{grid-template-columns:minmax(0,1fr) 460px}}
+.atx-card{width:min(1180px,100%)}
+.ax{padding:4px 4px 6px;overflow:hidden}
+.ax img{width:100%;aspect-ratio:1;object-fit:contain;opacity:0;transition:opacity .3s;display:block}
+.ax img.on{opacity:1}
+.ax .axs{position:absolute;top:4px;right:6px;font:700 10px var(--f-mono);color:var(--gc,var(--muted))}
+.ax.star .axs{right:18px}
+.ax .axq{display:grid;place-items:center;width:100%;aspect-ratio:1;font:800 2rem var(--f-display);color:var(--muted);background:repeating-linear-gradient(135deg,transparent 0 6px,color-mix(in srgb,var(--ink) 4%,transparent) 6px 12px);border-radius:8px}
+.ax:not(.lock){background:radial-gradient(circle at 50% 40%,color-mix(in srgb,var(--gc) 22%,transparent),transparent 70%),var(--raise)}
+.atx-view{padding:12px}
+.atx-stage{position:relative;border-radius:14px;overflow:hidden;background:radial-gradient(120% 90% at 50% 20%,color-mix(in srgb,var(--gc) 35%,#1a2030),#0b0e16 75%);color:#fff}
+.atx-3d{height:min(420px,52vh);min-height:300px;position:relative;touch-action:none}
+.atx-3d canvas{display:block;width:100%!important;height:100%!important;cursor:grab}
+.atx-3d canvas:active{cursor:grabbing}
+.atx-load{position:absolute;inset:0;display:grid;place-items:center;font:600 13px var(--f-mono);color:rgba(255,255,255,.7)}
+.atx-hint{position:absolute;bottom:74px;left:12px;font:500 10.5px var(--f-mono);color:rgba(255,255,255,.55);pointer-events:none}
+.atx-forms{position:absolute;top:8px;right:8px;left:auto;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:4px;max-width:70%}
+.af{border:1px solid rgba(255,255,255,.22);background:rgba(10,12,20,.55);backdrop-filter:blur(6px);color:#fff;border-radius:999px;padding:4px 10px;font:600 11px var(--f-mono);cursor:pointer}
+.af.on{border-color:var(--mc);box-shadow:0 0 0 1px var(--mc),0 0 14px color-mix(in srgb,var(--mc) 60%,transparent);background:color-mix(in srgb,var(--mc) 25%,rgba(10,12,20,.6))}
+.atx-forms:has(.af:only-child){display:none}
+.atx-moves{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:8px;background:linear-gradient(transparent,rgba(0,0,0,.55));position:absolute;left:0;right:0;bottom:0}
+.mv{border:1px solid rgba(255,255,255,.2);background:rgba(15,18,28,.7);backdrop-filter:blur(6px);color:#fff;border-radius:10px;padding:8px 6px 7px;cursor:pointer;display:grid;justify-items:center;gap:3px;min-width:0;transition:transform .12s}
+.mv b{font:700 12px var(--f-display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.mv kbd{font:700 10px var(--f-mono);padding:1px 6px;border-radius:5px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25)}
+.mv:hover{border-color:rgba(255,255,255,.5)}
+.mv.mvs{border-color:color-mix(in srgb,var(--gc) 70%,#fff 10%)}
+.mv.ul{border-color:#FFB547}
+.mv.ul.on{background:linear-gradient(135deg,#FF5C9A,#FFB547);color:#1a0610;border-color:#fff}
+.mv.ul.on kbd{background:rgba(0,0,0,.15);border-color:rgba(0,0,0,.25)}
+.mv.hit{animation:mvHit .3s ease}
+@keyframes mvHit{40%{transform:scale(.92)}}
+.atx-toast{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%) scale(.8);font:800 clamp(1.3rem,4vw,2rem) var(--f-display);letter-spacing:-.01em;color:#fff;text-shadow:0 2px 18px rgba(0,0,0,.6),0 0 24px color-mix(in srgb,var(--gc) 80%,transparent);opacity:0;pointer-events:none;white-space:nowrap}
+.atx-toast.go{animation:atxT 1.4s ease forwards}
+@keyframes atxT{0%{opacity:0;transform:translate(-50%,-50%) scale(.7)}15%{opacity:1;transform:translate(-50%,-50%) scale(1.05)}70%{opacity:1;transform:translate(-50%,-60%) scale(1)}100%{opacity:0;transform:translate(-50%,-75%) scale(1)}}
+.atx-muts .gift{border-color:#FFB547!important;color:#C2410C}
+@media (max-width:520px){.mv b{font-size:10.5px}.atx-forms{max-width:100%;left:8px;top:30px;justify-content:flex-start}.atx-hint{top:8px}}
+
+.ax{justify-items:stretch;text-align:center}
+.ax .axn{justify-self:center}
+@media (max-width:520px){.atx-hint{display:none}}
+.atx-grid{grid-auto-rows:max-content}
+img.logo-mark{display:block;width:40px;height:40px;background:none;border-radius:11px;box-shadow:0 4px 14px rgba(124,58,237,.35)}
+@media (max-width:700px){img.logo-mark{width:34px;height:34px;border-radius:9px}}

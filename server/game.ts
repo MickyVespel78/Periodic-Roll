@@ -16,8 +16,8 @@ const DEFS: Record<string, { max: number; cost: (l: number) => number }> = {
   speed: { max: 10, cost: (l) => Math.round(40000 * Math.pow(2, l)) },
   luck: { max: 20, cost: (l) => Math.round(150 * Math.pow(1.9, l)) },
 };
-const fresh = (): any => ({ exp: 0, life: 0, rolls: 0, tot: 0, up: { auto: 0, speed: 0, luck: 0 }, autoOn: false, found: {}, words: {}, rx: {}, best: null, top: [], recent: [], last: null, rebirths: 0, trb: 0, shards: 0, ach: {}, qs: {}, dets: {}, secs: {}, outers: {}, stars: {}, impacts: {}, systems: {}, holes: {}, beyonds: {}, multis: {}, unis: {}, omnis: {}, absolutes: {}, ones: {} });
-const KEEP = ["trb", "shards", "ach", "qs", "rolls", "found", "words", "rx", "top", "recent", "secs", "dets", "tot", "life", "best", "outers", "stars", "impacts", "systems", "holes", "beyonds", "multis", "unis", "omnis", "absolutes", "ones"];
+const fresh = (): any => ({ exp: 0, life: 0, rolls: 0, tot: 0, up: { auto: 0, speed: 0, luck: 0 }, autoOn: false, found: {}, words: {}, rx: {}, best: null, top: [], recent: [], last: null, rebirths: 0, atx: {}, trb: 0, shards: 0, ach: {}, qs: {}, dets: {}, secs: {}, outers: {}, stars: {}, impacts: {}, systems: {}, holes: {}, beyonds: {}, multis: {}, unis: {}, omnis: {}, absolutes: {}, ones: {} });
+const KEEP = ["atx", "trb", "shards", "ach", "qs", "rolls", "found", "words", "rx", "top", "recent", "secs", "dets", "tot", "life", "best", "outers", "stars", "impacts", "systems", "holes", "beyonds", "multis", "unis", "omnis", "absolutes", "ones"];
 function merge(S: any, d: any) {
   if (!d || typeof d !== "object") return;
   for (const k of Object.keys(S)) {

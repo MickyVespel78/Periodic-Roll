@@ -34,7 +34,7 @@
 
 <header class="bar">
   <div class="bar-in">
-    <a class="logo" href="#" aria-label="Periodic Roll"><span class="logo-mark"><svg><use href="#i-atom"/></svg></span><span class="logo-txt">Periodic<b>Roll</b></span></a>
+    <a class="logo" href="#" aria-label="Periodic Roll"><img class="logo-mark" src="icons/icon.svg" alt="" width="40" height="40"><span class="logo-txt">Periodic<b>Roll</b></span></a>
     <div class="purse" aria-label="Your currencies">
       <span class="pill" title="EXP to spend"><span class="pk">EXP</span><b id="exp">0</b></span>
       <span class="pill lvl" title="Level"><span class="pk">LV</span><b id="lvl">1</b></span>
@@ -234,6 +234,12 @@
     <p class="info" id="ownRollInfo">Choose all six tiles, with any element and any mutation. It counts as a real roll: EXP, Index, best roll and the cutscene.</p>
     <div id="ownTiles" class="own-tiles"></div>
     <button type="button" class="buy" id="ownRoll">Roll it</button>
+
+    <h3 class="own-h">Give Atomix</h3>
+    <p class="info">Unlock any element's Atomix in any form, even without that mutation. Normal players only get Atomix from mutations.</p>
+    <label class="own-l">Atomix<select id="ownAtxEl"></select></label>
+    <label class="own-l">Form<select id="ownAtxMut"></select></label>
+    <button type="button" class="buy" id="ownAtx">Give Atomix</button>
 
     <h3 class="own-h">Unlock one</h3>
     <p class="info">Add an element with a mutation to your Index and ledger without a roll. No EXP.</p>

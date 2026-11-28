@@ -1,16 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1B2B37"/><stop offset="1" stop-color="#0D1720"/></linearGradient>
-    <linearGradient id="ac" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF5C9A"/><stop offset="1" stop-color="#D6246E"/></linearGradient>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1A0F3D"/><stop offset=".55" stop-color="#4C1D95"/><stop offset="1" stop-color="#DB2777"/></linearGradient>
+    <radialGradient id="glow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#FFE7A0" stop-opacity=".9"/><stop offset="1" stop-color="#FFE7A0" stop-opacity="0"/></radialGradient>
+    <linearGradient id="die" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#E6DEFF"/></linearGradient>
+    <linearGradient id="shine" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient>
   </defs>
-  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
-  <rect x="96" y="96" width="320" height="320" rx="40" fill="#F8FAFB"/>
-  <rect x="96" y="96" width="320" height="320" rx="40" fill="none" stroke="url(#ac)" stroke-width="14"/>
-  <text x="132" y="160" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="44" fill="#53626F">59</text>
-  <text x="256" y="338" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-weight="700" font-size="190" fill="#121C25">P<tspan fill="#D6246E">r</tspan></text>
-  <g fill="url(#ac)">
-    <circle cx="320" cy="150" r="13"/><circle cx="360" cy="150" r="13"/><circle cx="360" cy="190" r="13"/>
-    <circle cx="320" cy="190" r="13"/><circle cx="340" cy="170" r="0"/>
+  <rect width="512" height="512" rx="116" fill="url(#bg)"/>
+  <rect width="512" height="512" rx="116" fill="url(#shine)"/>
+  <g fill="none" stroke="#fff" stroke-width="14" stroke-linecap="round">
+    <ellipse cx="256" cy="262" rx="196" ry="70" stroke-opacity=".9"/>
+    <ellipse cx="256" cy="262" rx="196" ry="70" transform="rotate(60 256 262)" stroke-opacity=".75"/>
+    <ellipse cx="256" cy="262" rx="196" ry="70" transform="rotate(120 256 262)" stroke-opacity=".75"/>
   </g>
-  <text x="256" y="388" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="26" letter-spacing="6" fill="#53626F">ROLL</text>
+  <circle cx="256" cy="262" r="120" fill="url(#glow)"/>
+  <g transform="rotate(-12 256 262)">
+    <rect x="196" y="202" width="120" height="120" rx="30" fill="url(#die)"/>
+    <circle cx="228" cy="234" r="12" fill="#4C1D95"/><circle cx="256" cy="262" r="12" fill="#DB2777"/><circle cx="284" cy="290" r="12" fill="#4C1D95"/>
+  </g>
+  <circle cx="452" cy="262" r="20" fill="#5CE1E6"/>
+  <circle cx="158" cy="92" r="18" fill="#FFD24A"/>
+  <circle cx="158" cy="432" r="18" fill="#FF8AD8"/>
 </svg>
